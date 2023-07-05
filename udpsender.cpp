@@ -39,7 +39,7 @@ bool udpSender::isConnect()
 //}
 
 //对于服务端,需要指定往哪一个客户端发送数据.
-int udpSender::send_buf(std::string str, SOCKETINFO* socketinfo)
+int udpSender::send_buf(std::string str, const SOCKETINFO* socketinfo)
 {
     return send_buf(str.c_str(), str.length(), socketinfo);
 }
@@ -51,9 +51,9 @@ int udpSender::send_buf(std::string str, SOCKETINFO* socketinfo)
 //}
 
 //对于服务端,需要指定往哪一个客户端发送数据.
-int udpSender::send_buf(const char* data, int len, SOCKETINFO* socketinfo_in)
+int udpSender::send_buf(const char* data, int len, const SOCKETINFO* socketinfo_in)
 {
-    SOCKETINFO* socketinfo = socketinfo_in;
+    const SOCKETINFO* socketinfo = socketinfo_in;
     if(socketinfo == nullptr)
 	socketinfo = &m_svrSockAddr;
 
@@ -232,12 +232,13 @@ void* udpSender::threadReceiveProc()
 	//        cout << " recv count = " << count << "buf = " << buf << endl;
 
 	//通过回调向上一级传递.
-	if(m_cbFunc != nullptr)
-	{
-	    std::string str(buf, count);
-	    m_cbFunc(str, (SOCKETINFO*)&client_addr, m_cbArg);
-	    //m_cbFunc(buf, (SOCKETINFO*)&client_addr, m_cbArg);
-	}
+//	if(m_cbFunc != nullptr)
+//	{
+//	    std::string str(buf, count);
+//	    m_cbFunc(str, (SOCKETINFO*)&client_addr, m_cbArg);
+//	    //m_cbFunc(buf, (SOCKETINFO*)&client_addr, m_cbArg);
+//	}
+	m_protocol_iface->recv_data((const SOCKETINFO&)client_addr, buf, len);
     }
 
     //printf("end thread receive\n");

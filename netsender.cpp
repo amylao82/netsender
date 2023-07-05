@@ -3,7 +3,7 @@
 #include "udpsender.h"
 
 //shared_ptr<netsender> createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port)
-netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port)
+netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, shared_ptr<protocol_interface> protocol_iface)
 {
     bool ret;
     switch(protocol)
@@ -28,6 +28,14 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
 		    pSender = nullptr;
 		}
 
+		if(protocol_iface == nullptr)
+		{
+		    protocol_iface = shared_ptr<protocol_interface>(new protocol_interface());
+		}
+		//sender与protocol实例联结
+		pSender->m_protocol_iface = protocol_iface;
+		protocol_iface->set_netsender(shared_ptr<netsender>(pSender));
+
 		return dynamic_cast<netsender*>(pSender);
 	    }
 	case netsender::PROTOCOL_TCP:
@@ -41,8 +49,7 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
 
 
 netsender::netsender()
-    :m_cbFunc(nullptr)
-     ,m_cbArg(nullptr)
+    : m_protocol_iface(nullptr)
 {
 #ifdef PLATFORM_WINDOWS
     WSADATA wsaData;
@@ -58,5 +65,7 @@ netsender::~netsender()
 #ifdef PLATFORM_WINDOWS
     WSACleanup();
 #endif
+
+    m_protocol_iface = nullptr;
 }
 

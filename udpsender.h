@@ -10,9 +10,9 @@ class udpSender: public netsender
 	virtual bool isConnect();
 	//virtual int send_buf(std::string str, struct sockaddr* addr);
 //	virtual int send_buf(std::string str);
-	virtual int send_buf(std::string str, SOCKETINFO* socketinfo);
+	virtual int send_buf(std::string str, const SOCKETINFO* socketinfo);
 //	virtual int send_buf(const char* data, int len);
-	virtual int send_buf(const char* data, int len, SOCKETINFO* socketinfo);
+	virtual int send_buf(const char* data, int len, const SOCKETINFO* socketinfo);
 
 	virtual bool disconnect();
 
