@@ -1,6 +1,8 @@
 ﻿
 #include "netsender.h"
 #include "netsender_udp.h"
+#include "netsender_tcp_server.h"
+#include "netsender_tcp_client.h"
 
 netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, protocol_interface* protocol_iface)
 {
@@ -9,7 +11,7 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
     {
 	case netsender::PROTOCOL_UDP:
 	    {
-		netsender_udp* pSender = new netsender_udp(type, port);
+		netsender_udp* pSender = new netsender_udp(type, port, protocol_iface);
 		//如果IP地址为广播地址,需要设置广播属性.
 		if(connectServer == "255.255.255.255")
 		{
@@ -21,7 +23,7 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
 //		    protocol_iface = shared_ptr<protocol_interface>(new protocol_interface());
 //		}
 		//sender与protocol实例联结
-		pSender->m_protocol_iface = protocol_iface;
+//		pSender->m_protocol_iface = protocol_iface;
 		protocol_iface->set_netsender(pSender);
 
 		if(type == netsender::TYPE_SERVER)
@@ -40,6 +42,35 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
 		return dynamic_cast<netsender*>(pSender);
 	    }
 	case netsender::PROTOCOL_TCP:
+	    {
+		if(type == NETSENDER_TYPE::TYPE_SERVER)
+		{
+		    netsender_tcp_server* sender = new netsender_tcp_server(connectServer, port, protocol_iface);
+		    if(false == sender->init())
+		    {
+			delete sender;
+			return nullptr;
+		    }
+
+		    protocol_iface->set_netsender(sender);
+
+		    return sender;
+		}
+		else
+		{
+		    netsender_tcp_client* sender = new netsender_tcp_client(connectServer, port, protocol_iface);
+
+		    if(false == sender->init())
+		    {
+			delete sender;
+			return nullptr;
+		    }
+
+		    protocol_iface->set_netsender(sender);
+
+		    return sender;
+		}
+	    }
 	case netsender::PROTOCOL_WEBSOCKET:
 	case netsender::PROTOCOL_HTTP:
 	default:

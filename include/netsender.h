@@ -65,6 +65,11 @@ class netsender {
 	virtual bool disconnect() = 0;
 
     protected:
+	netsender(protocol_interface* protocol_iface)
+	    :m_protocol_iface(protocol_iface)
+	{
+	}
+    protected:
 	protocol_interface* m_protocol_iface;
 };
 

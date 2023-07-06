@@ -1,5 +1,6 @@
 ﻿
-#pragma once
+#ifndef _NETSENDER_UDP_H_
+#define _NETSENDER_UDP_H_
 
 #include "netsender.h"
 
@@ -8,17 +9,14 @@ class netsender_udp: public netsender
     public:
 	//继承来的对外接口
 	virtual bool isConnect();
-	//virtual int send_buf(std::string str, struct sockaddr* addr);
-//	virtual int send_buf(std::string str);
 	virtual int send_buf(std::string str, const SOCKETINFO* socketinfo);
-//	virtual int send_buf(const char* data, int len);
 	virtual int send_buf(const char* data, int len, const SOCKETINFO* socketinfo);
 
 	virtual bool disconnect();
 
     public:
 	//非继承来的对外函数.
-	netsender_udp(NETSENDER_TYPE type, int port);
+	netsender_udp(NETSENDER_TYPE type, int port, protocol_interface* protocol_iface);
 	virtual ~netsender_udp();
 	//设置是否使用广播通信.
 	void set_broadcast(bool broadcast);
@@ -60,4 +58,7 @@ class netsender_udp: public netsender
     private:
 	netsender_udp(){};
 };
+
+#endif
+
 

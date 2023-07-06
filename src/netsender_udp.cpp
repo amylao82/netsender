@@ -4,8 +4,8 @@
 #define SERVER_PORT 8003 
 #define BUFF_LEN 1024
 
-netsender_udp::netsender_udp(NETSENDER_TYPE type, int port)
-    :netsender()
+netsender_udp::netsender_udp(NETSENDER_TYPE type, int port, protocol_interface* protocol_iface)
+    :netsender(protocol_iface)
     , m_type(type)
     , m_port(port)
     , m_broadcast(false)
@@ -209,35 +209,24 @@ void* netsender_udp::threadReceiveProc()
 	//使用shutdown结束.
 	count = recvfrom(m_socket, buf, BUFF_LEN, 0, (struct sockaddr*)&client_addr, &len);  //recvfrom是阻塞函数，没有数据就一直阻塞
 
-    //windows平台因为使用的是超时机制，在超时时会返回-1。
+	//windows平台因为使用的是超时机制，在超时时会返回-1。
 	if(count == -1)
 	{
-        if(m_socket_mode_block_io)
-        {
-            printf("receive data fail!\n");
-            return nullptr;
-        }
-        else
-        {
-            continue;
-        }
+	    if(m_socket_mode_block_io)
+	    {
+		printf("receive data fail!\n");
+		return nullptr;
+	    }
+	    else
+	    {
+		continue;
+	    }
 	}
 
 	//如果接收到的长度为0.说明是使用shutdown函数结束时退出recvfrom.
 	if(count == 0)
 	    continue;
 
-	//        cout << "s_addr = " << client_addr.sin_addr.s_addr << endl;
-	//        cout << " port = " << client_addr.sin_port << endl;
-	//        cout << " recv count = " << count << "buf = " << buf << endl;
-
-	//通过回调向上一级传递.
-//	if(m_cbFunc != nullptr)
-//	{
-//	    std::string str(buf, count);
-//	    m_cbFunc(str, (SOCKETINFO*)&client_addr, m_cbArg);
-//	    //m_cbFunc(buf, (SOCKETINFO*)&client_addr, m_cbArg);
-//	}
 	m_protocol_iface->recv_data((const SOCKETINFO&)client_addr, buf, len);
     }
 
