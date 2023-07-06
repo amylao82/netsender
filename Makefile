@@ -2,9 +2,10 @@
 # 静态库名称和目标文件列表
 TARGET := libnetsender.a
 
+INC_DIR := -Iinclude
 CFLAGS := -g
 
-SRC := $(wildcard *.cpp)
+SRC := $(wildcard src/*.cpp)
 OBJS := $(subst .cpp,.o, $(SRC))
 D_FILE := $(subst .cpp,.d, $(SRC))
 

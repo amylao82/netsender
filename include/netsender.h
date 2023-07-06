@@ -31,21 +31,6 @@ using namespace std;
 
 class protocol_interface;
 
-//定义一个返回的结构体,里面包含接收到数据的相关信息.
-//如果是udp,里面是struct sockaddr
-//如果是TCP,里面是socket.
-//如果是WEBSOCKET,里面是websocket相关的接口信息.
-//typedef union {
-//    struct _udp {
-//	struct sockaddr socket;
-//    } udp;
-//    struct _tcp {
-//	int socket;
-//    } tcp;
-//} SOCKETINFO;
-//data callback function .
-//typedef void (*DATAPROC)(std::string, SOCKETINFO*, void*);
-
 class netsender {
     public:
 	typedef enum {
@@ -61,13 +46,11 @@ class netsender {
 	} NETSENDER_TYPE;
 
 	//指定创建的是服务器端还是客户端, 如果是客户端,后面的参数是要连接的服务器.
-	//shared_ptr<netsender> createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port);
 	//2023.02.20. 对于服务器端, connectServer也是需要的,因为有的设备有二个网卡,需要指定绑定到哪一个网卡上.
-	static netsender* createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, shared_ptr<protocol_interface> protocol_iface);
+	static netsender* createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, protocol_interface* protocol_iface);
 
 	netsender();
 	virtual ~netsender();	//需要一个虚函数的析构函数,才能实现从基类的指针链式调用释放子类.
-//	void setDataCB(DATAPROC dataproc, void* arg) {m_cbFunc = dataproc; m_cbArg = arg;};
 
 	virtual bool isConnect() = 0;
 
@@ -76,17 +59,13 @@ class netsender {
 	// 2023.03.02. 减掉二个接口,而使用默认参数代替.
 	// 一般客户端往服务器发送,因为已经连接,里面已经保存了socketinfo.所以可以使用空参数
 	// 而如果是服务器端往客户端发送.因为服务端需要服务多个客户端,因此只能使用需要应答的数据帧的源地址作为目的地址.
-//	virtual int send_buf(std::string str) = 0;
 	virtual int send_buf(std::string str, const SOCKETINFO* socketinfo = nullptr) = 0;
-//	virtual int send_buf(const char* data, int len) = 0;
 	virtual int send_buf(const char* data, int len, const SOCKETINFO* socketinfo = nullptr) = 0;
 
 	virtual bool disconnect() = 0;
 
     protected:
-//	DATAPROC m_cbFunc;
-//	void* m_cbArg;
-	shared_ptr<protocol_interface> m_protocol_iface;
+	protocol_interface* m_protocol_iface;
 };
 
 #endif

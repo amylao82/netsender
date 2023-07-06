@@ -1,21 +1,29 @@
 ﻿
 #include "netsender.h"
-#include "udpsender.h"
+#include "netsender_udp.h"
 
-//shared_ptr<netsender> createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port)
-netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, shared_ptr<protocol_interface> protocol_iface)
+netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, protocol_interface* protocol_iface)
 {
     bool ret;
     switch(protocol)
     {
 	case netsender::PROTOCOL_UDP:
 	    {
-		udpSender* pSender = new udpSender(type, port);
+		netsender_udp* pSender = new netsender_udp(type, port);
 		//如果IP地址为广播地址,需要设置广播属性.
 		if(connectServer == "255.255.255.255")
 		{
 		    pSender->set_broadcast(true);
 		}
+
+//		if(protocol_iface == nullptr)
+//		{
+//		    protocol_iface = shared_ptr<protocol_interface>(new protocol_interface());
+//		}
+		//sender与protocol实例联结
+		pSender->m_protocol_iface = protocol_iface;
+		protocol_iface->set_netsender(pSender);
+
 		if(type == netsender::TYPE_SERVER)
 		    ret = pSender->initServer();
 		else
@@ -28,13 +36,6 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
 		    pSender = nullptr;
 		}
 
-		if(protocol_iface == nullptr)
-		{
-		    protocol_iface = shared_ptr<protocol_interface>(new protocol_interface());
-		}
-		//sender与protocol实例联结
-		pSender->m_protocol_iface = protocol_iface;
-		protocol_iface->set_netsender(shared_ptr<netsender>(pSender));
 
 		return dynamic_cast<netsender*>(pSender);
 	    }
@@ -55,7 +56,7 @@ netsender::netsender()
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
     {
-        std::cerr << "Call to WSAStartup failed." << std::endl;
+	std::cerr << "Call to WSAStartup failed." << std::endl;
     }
 #endif
 }

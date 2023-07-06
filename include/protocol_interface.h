@@ -49,18 +49,21 @@ typedef union {
 class protocol_interface
 {
     public:
-	virtual ~protocol_interface() {};
+	virtual ~protocol_interface()
+	{
+	};
 
 	virtual void recv_data(const SOCKETINFO& socket, void* data, int len);
-	virtual int send_data(const SOCKETINFO& socket, void* data, int len);
+	int send_data(const SOCKETINFO& socket, void* data, int len);
 
-	void set_netsender(shared_ptr<netsender> sender)
+	void set_netsender(netsender* sender)
 	{
 	    m_netsender = sender;
 	}
 
     private:
-	shared_ptr<netsender> m_netsender;
+	//shared_ptr<netsender> m_netsender;
+	netsender* m_netsender;
 
 };
 

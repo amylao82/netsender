@@ -1,10 +1,10 @@
 ﻿
-#include "udpsender.h"
+#include "netsender_udp.h"
 
 #define SERVER_PORT 8003 
 #define BUFF_LEN 1024
 
-udpSender::udpSender(NETSENDER_TYPE type, int port)
+netsender_udp::netsender_udp(NETSENDER_TYPE type, int port)
     :netsender()
     , m_type(type)
     , m_port(port)
@@ -12,56 +12,56 @@ udpSender::udpSender(NETSENDER_TYPE type, int port)
     ,  m_connectOK(false)
     , m_socket(-1)
     , m_socket_mode_block_io(true)
-    , m_bStopRecv(true)
+     , m_bStopRecv(true)
 {
 }
 
-udpSender::~udpSender()
+netsender_udp::~netsender_udp()
 {
     stopRecvThread();
     disconnect();
 }
 
-void udpSender::set_broadcast(bool broadcast)
+void netsender_udp::set_broadcast(bool broadcast)
 {
     m_broadcast = broadcast;
 }
 
-bool udpSender::isConnect()
+bool netsender_udp::isConnect()
 {
     return m_connectOK;
 }
 
 //对于客户端,只能往服务器上发.
-//int udpSender::send_buf(std::string str)
+//int netsender_udp::send_buf(std::string str)
 //{
 //    return send_buf(str.c_str(), str.length());
 //}
 
 //对于服务端,需要指定往哪一个客户端发送数据.
-int udpSender::send_buf(std::string str, const SOCKETINFO* socketinfo)
+int netsender_udp::send_buf(std::string str, const SOCKETINFO* socketinfo)
 {
     return send_buf(str.c_str(), str.length(), socketinfo);
 }
 
-//int udpSender::send_buf(const char* data, int len)
+//int netsender_udp::send_buf(const char* data, int len)
 //{
 //    sendto(m_socket, data, len, 0, &m_svrSockAddr, sizeof(m_svrSockAddr));
 //    return 1;
 //}
 
 //对于服务端,需要指定往哪一个客户端发送数据.
-int udpSender::send_buf(const char* data, int len, const SOCKETINFO* socketinfo_in)
+int netsender_udp::send_buf(const char* data, int len, const SOCKETINFO* socketinfo_in)
 {
     const SOCKETINFO* socketinfo = socketinfo_in;
     if(socketinfo == nullptr)
 	socketinfo = &m_svrSockAddr;
 
     sendto(m_socket, data, len, 0, &socketinfo->udp.socket, sizeof(*socketinfo));
-    return 1;
+    return len;
 }
 
-bool udpSender::initServer()
+bool netsender_udp::initServer()
 {
     int bRet;
     struct sockaddr_in* ser_addr = (struct sockaddr_in*)&m_svrSockAddr;
@@ -103,7 +103,7 @@ bool udpSender::initServer()
     return true;
 }
 
-bool udpSender::connectServer(std::string strServer)
+bool netsender_udp::connectServer(std::string strServer)
 {
     bool bRet;
     struct sockaddr_in* ser_addr = (struct sockaddr_in*)&m_svrSockAddr;
@@ -145,7 +145,7 @@ bool udpSender::connectServer(std::string strServer)
     return true;
 }
 
-bool udpSender::createRecvThread()
+bool netsender_udp::createRecvThread()
 {
     m_bStopRecv = false;
     //pthread_create(&m_pidRecv, nullptr, &threadReceive, this);
@@ -156,7 +156,7 @@ bool udpSender::createRecvThread()
     return true;
 }
 
-void udpSender::stopRecvThread()
+void netsender_udp::stopRecvThread()
 {
     m_bStopRecv = true;
 
@@ -171,7 +171,7 @@ void udpSender::stopRecvThread()
     m_thread_recv.reset();
 }
 
-void udpSender::set_socket_timeout(int timeout_sec)
+void netsender_udp::set_socket_timeout(int timeout_sec)
 {
 #ifdef PLATFORM_WINDOWS
     int timeout = timeout_sec * 1000;
@@ -194,7 +194,7 @@ void udpSender::set_socket_timeout(int timeout_sec)
 }
 
 
-void* udpSender::threadReceiveProc()
+void* netsender_udp::threadReceiveProc()
 {
     char buf[BUFF_LEN];  //接收缓冲区，1024字节
     socklen_t len;
@@ -246,9 +246,9 @@ void* udpSender::threadReceiveProc()
     return nullptr;
 }
 
-bool udpSender::disconnect()
+bool netsender_udp::disconnect()
 {
-    //cout << "udpSender disconnect " << endl;
+    //cout << "netsender_udp disconnect " << endl;
     if(m_socket >= 0)
     {
 #ifdef PLATFORM_WINDOWS
@@ -258,12 +258,12 @@ bool udpSender::disconnect()
 #endif
 	m_socket = -1;
     }
-    //cout << "udpSender disconnect end" << endl;
+    //cout << "netsender_udp disconnect end" << endl;
 
     return true;
 }
 
-bool udpSender::create_socket()
+bool netsender_udp::create_socket()
 {
     m_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if(m_socket < 0)
@@ -281,7 +281,7 @@ bool udpSender::create_socket()
     return true;
 }
 
-bool udpSender::set_socket_broadcast()
+bool netsender_udp::set_socket_broadcast()
 {
     int opt=-1;
     int nb=0;

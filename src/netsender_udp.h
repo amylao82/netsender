@@ -3,7 +3,7 @@
 
 #include "netsender.h"
 
-class udpSender: public netsender
+class netsender_udp: public netsender
 {
     public:
 	//继承来的对外接口
@@ -18,8 +18,8 @@ class udpSender: public netsender
 
     public:
 	//非继承来的对外函数.
-	udpSender(NETSENDER_TYPE type, int port);
-	virtual ~udpSender();
+	netsender_udp(NETSENDER_TYPE type, int port);
+	virtual ~netsender_udp();
 	//设置是否使用广播通信.
 	void set_broadcast(bool broadcast);
 	bool initServer();
@@ -58,6 +58,6 @@ class udpSender: public netsender
 	//struct sockaddr m_svrSockAddr;
 	SOCKETINFO m_svrSockAddr;
     private:
-	udpSender(){};
+	netsender_udp(){};
 };
 
