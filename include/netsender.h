@@ -26,6 +26,7 @@
 #endif
 
 #include "protocol_interface.h"
+#include "socketopt.h"
 
 using namespace std;
 
@@ -47,10 +48,9 @@ class netsender {
 
 	//指定创建的是服务器端还是客户端, 如果是客户端,后面的参数是要连接的服务器.
 	//2023.02.20. 对于服务器端, connectServer也是需要的,因为有的设备有二个网卡,需要指定绑定到哪一个网卡上.
-	static netsender* createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, protocol_interface* protocol_iface);
+	static netsender* createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, protocol_interface* protocol_iface, socketopt* opt = nullptr);
 
-	netsender();
-	virtual ~netsender();	//需要一个虚函数的析构函数,才能实现从基类的指针链式调用释放子类.
+	virtual ~netsender() {};	//需要一个虚函数的析构函数,才能实现从基类的指针链式调用释放子类.
 
 	virtual bool isConnect() = 0;
 
@@ -64,13 +64,6 @@ class netsender {
 
 	virtual bool disconnect() = 0;
 
-    protected:
-	netsender(protocol_interface* protocol_iface)
-	    :m_protocol_iface(protocol_iface)
-	{
-	}
-    protected:
-	protocol_interface* m_protocol_iface;
 };
 
 #endif

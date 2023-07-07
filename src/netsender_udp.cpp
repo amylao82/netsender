@@ -4,21 +4,21 @@
 #define SERVER_PORT 8003 
 #define BUFF_LEN 1024
 
-netsender_udp::netsender_udp(NETSENDER_TYPE type, int port, protocol_interface* protocol_iface)
-    :netsender(protocol_iface)
+netsender_udp::netsender_udp(NETSENDER_TYPE type, string server, int port, protocol_interface* protocol_iface)
+    :netsender_base_impl(server, port, protocol_iface)
     , m_type(type)
-    , m_port(port)
+//    , m_port(port)
     , m_broadcast(false)
     ,  m_connectOK(false)
-    , m_socket(-1)
+//    , m_socket(-1)
     , m_socket_mode_block_io(true)
-     , m_bStopRecv(true)
+     , m_bexit(true)
 {
 }
 
 netsender_udp::~netsender_udp()
 {
-    stopRecvThread();
+    stop_recv_thread();
     disconnect();
 }
 
@@ -30,6 +30,15 @@ void netsender_udp::set_broadcast(bool broadcast)
 bool netsender_udp::isConnect()
 {
     return m_connectOK;
+}
+
+bool netsender_udp::init(socketopt* opt)
+{
+    if(m_type == NETSENDER_TYPE::TYPE_SERVER)
+	return initServer(opt);
+    else
+	return connectServer(m_server, opt);
+
 }
 
 //对于客户端,只能往服务器上发.
@@ -61,12 +70,12 @@ int netsender_udp::send_buf(const char* data, int len, const SOCKETINFO* socketi
     return len;
 }
 
-bool netsender_udp::initServer()
+bool netsender_udp::initServer(socketopt* opt)
 {
     int bRet;
     struct sockaddr_in* ser_addr = (struct sockaddr_in*)&m_svrSockAddr;
 
-    if(false == create_socket())
+    if(false == create_socket(opt))
 	return false;
 
     memset(ser_addr, 0, sizeof(&ser_addr));
@@ -90,11 +99,11 @@ bool netsender_udp::initServer()
     }
 
 
-    bRet = createRecvThread();
+    bRet = create_recv_thread();
 
     if(bRet == false)
     {
-	printf("createRecvThread fail!\n");
+	printf("create_recv_thread fail!\n");
 	return false;
     }
 
@@ -103,12 +112,12 @@ bool netsender_udp::initServer()
     return true;
 }
 
-bool netsender_udp::connectServer(std::string strServer)
+bool netsender_udp::connectServer(std::string strServer, socketopt* opt)
 {
     bool bRet;
     struct sockaddr_in* ser_addr = (struct sockaddr_in*)&m_svrSockAddr;
 
-    if(false == create_socket())
+    if(false == create_socket(opt))
 	return false;
 
     //如果传进来的是一个域名,需要通过域名获取一个host.
@@ -132,11 +141,11 @@ bool netsender_udp::connectServer(std::string strServer)
     }
 
     //==============================
-    bRet = createRecvThread();
+    bRet = create_recv_thread();
 
     if(bRet == false)
     {
-	printf("createRecvThread fail!\n");
+	printf("create_recv_thread fail!\n");
 	return false;
     }
 
@@ -145,20 +154,30 @@ bool netsender_udp::connectServer(std::string strServer)
     return true;
 }
 
-bool netsender_udp::createRecvThread()
+void netsender_udp::thread_recv(void* args)
 {
-    m_bStopRecv = false;
+    netsender_udp* p = (netsender_udp*)args;
+    p->thread_recv_proc();
+}
+
+bool netsender_udp::create_recv_thread()
+{
+    m_bexit = false;
     //pthread_create(&m_pidRecv, nullptr, &threadReceive, this);
-    m_thread_recv.reset(new std::thread([this]
-		{
-		threadReceiveProc();
-		}));
+//    m_thread_recv.reset(new std::thread([this]
+//		{
+//		threadReceiveProc();
+//		}));
+
+    thread th(thread_recv, this);
+    th.detach();
+
     return true;
 }
 
-void netsender_udp::stopRecvThread()
+void netsender_udp::stop_recv_thread()
 {
-    m_bStopRecv = true;
+    m_bexit = true;
 
     //关闭读写通道,否则无法退出recvfrom的调用线程.
 #ifdef PLATFORM_WINDOWS
@@ -167,8 +186,8 @@ void netsender_udp::stopRecvThread()
     shutdown(m_socket, SHUT_RDWR);
 #endif
 
-    m_thread_recv->join();
-    m_thread_recv.reset();
+//    m_thread_recv->join();
+//    m_thread_recv.reset();
 }
 
 void netsender_udp::set_socket_timeout(int timeout_sec)
@@ -194,14 +213,14 @@ void netsender_udp::set_socket_timeout(int timeout_sec)
 }
 
 
-void* netsender_udp::threadReceiveProc()
+void netsender_udp::thread_recv_proc()
 {
     char buf[BUFF_LEN];  //接收缓冲区，1024字节
     socklen_t len;
     int count;
     struct sockaddr_in client_addr;  //client_addr用于记录发送方的地址信息
 
-    while(!m_bStopRecv)
+    while(!m_bexit)
     {
 	memset(buf, 0, BUFF_LEN);
 	len = sizeof(client_addr);
@@ -215,7 +234,6 @@ void* netsender_udp::threadReceiveProc()
 	    if(m_socket_mode_block_io)
 	    {
 		printf("receive data fail!\n");
-		return nullptr;
 	    }
 	    else
 	    {
@@ -232,7 +250,6 @@ void* netsender_udp::threadReceiveProc()
 
     //printf("end thread receive\n");
 
-    return nullptr;
 }
 
 bool netsender_udp::disconnect()
@@ -252,7 +269,7 @@ bool netsender_udp::disconnect()
     return true;
 }
 
-bool netsender_udp::create_socket()
+bool netsender_udp::create_socket(socketopt* opt)
 {
     m_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if(m_socket < 0)
@@ -260,6 +277,9 @@ bool netsender_udp::create_socket()
 	printf("create socket fail!\n");
 	return false;
     }
+
+    if(opt != nullptr)
+	opt->set_socket_option(m_socket);
 
 #ifdef PLATFORM_WINDOWS
     //在windows平台下,不能使用shutdown(m_socket, SHUT_RDWR);来结束阻塞recvfrom调用.只能使用非阻塞socket来工作.

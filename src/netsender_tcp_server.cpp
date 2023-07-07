@@ -2,20 +2,18 @@
 #include "netsender_tcp_server.h"
 
 netsender_tcp_server::netsender_tcp_server(string server, int port, protocol_interface* protocol)
-    :netsender(protocol)
-//    , m_strserver(server)
-     ,m_port(port)
-     ,m_socket(-1)
+    :netsender_base_impl(server, port, protocol)
      ,m_exit(true)
 {
 }
 
 netsender_tcp_server::~netsender_tcp_server()
 {
+    stop_recv_thread();
     disconnect();
 }
 
-bool netsender_tcp_server::init()
+bool netsender_tcp_server::init(socketopt* opt)
 {
     int iret;
     struct sockaddr_in* ser_addr = (struct sockaddr_in*)&m_svrSockAddr;
@@ -26,12 +24,10 @@ bool netsender_tcp_server::init()
 	printf("create socket fail!\n");
 	return false;
     }
-/////for timeout test====================================================
-///struct timeval timeout;
-///timeout.tv_sec = 100;
-///timeout.tv_usec = 0;
-///setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
-//========================================================================================
+
+    //设置socket的参数
+    if(opt != nullptr)
+	opt->set_socket_option(m_socket);
 
     memset(ser_addr, 0, sizeof(&ser_addr));
     ser_addr->sin_family = AF_INET;
@@ -76,10 +72,6 @@ void netsender_tcp_server::thread_accept_proc()
         if (clientSocket == -1) {
             continue;
         }
-
-        // 创建线程处理客户端连接
-//        clientThreads.emplace_back(handleClient, clientSocket);
-//	cout << "clientThread size = " << clientThreads.size() << endl;
 
 	SOCKETINFO socketinfo;
 	socketinfo.tcp.socket = clientSocket;
@@ -147,3 +139,15 @@ bool netsender_tcp_server::isConnect()
     return true;
 }
 
+void netsender_tcp_server::stop_recv_thread()
+{
+    m_exit = true;
+
+    //关闭读写通道,否则无法退出recvfrom的调用线程.
+#ifdef PLATFORM_WINDOWS
+    shutdown(m_socket, SD_BOTH);
+#else
+    shutdown(m_socket, SHUT_RDWR);
+#endif
+
+}

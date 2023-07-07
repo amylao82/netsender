@@ -18,13 +18,12 @@
 //#include <thread>
 //#include <iostream>
 
-#include "netsender.h"
+#include "netsender_baseimpl.h"
 
 //using namespace std;
 
-class netsender_tcp_server:public netsender
+class netsender_tcp_server:public netsender_base_impl
 {
-    constexpr static int BUFFER_SIZE = 2048;
     public:
 	//继承来的对外接口
 	virtual bool isConnect();
@@ -38,7 +37,7 @@ class netsender_tcp_server:public netsender
 	netsender_tcp_server(string server, int port, protocol_interface* protocol);
 	virtual ~netsender_tcp_server();
 
-	bool init();
+	virtual bool init(socketopt* opt = nullptr);
 
     protected:
 	//接收连接线程
@@ -48,10 +47,12 @@ class netsender_tcp_server:public netsender
 	//客户端处理线程
 	static void thread_client(netsender_tcp_server* args, SOCKETINFO client_socket);
 	void thread_client_proc(SOCKETINFO client_socket);
+
+	void stop_recv_thread();
     protected:
 
-	int m_socket;
-	int m_port;
+//	int m_socket;
+//	int m_port;
 
 	struct sockaddr m_svrSockAddr;
 

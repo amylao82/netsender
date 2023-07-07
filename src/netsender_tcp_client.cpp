@@ -2,10 +2,7 @@
 #include "netsender_tcp_client.h"
 
 netsender_tcp_client::netsender_tcp_client(string server, int port, protocol_interface* protocol)
-    :netsender(protocol)
-     ,m_server(server)
-     ,m_socket(-1)
-     ,m_port(port)
+    :netsender_base_impl(server, port, protocol)
      ,m_exit(true)
 {
 }
@@ -13,12 +10,12 @@ netsender_tcp_client::netsender_tcp_client(string server, int port, protocol_int
 
 netsender_tcp_client::~netsender_tcp_client()
 {
-    stopRecvThread();
+    stop_recv_thread();
     disconnect();
 }
 
 
-bool netsender_tcp_client::init()
+bool netsender_tcp_client::init(socketopt* opt)
 {
     struct sockaddr_in ser_addr {};
 
@@ -28,6 +25,9 @@ bool netsender_tcp_client::init()
         std::cerr << "无法创建套接字" << std::endl;
         return false;
     }
+
+    if(opt != nullptr)
+	opt->set_socket_option(m_socket);
 
     //如果传进来的是一个域名,需要通过域名获取一个host.
     struct hostent *host = gethostbyname(m_server.c_str());
@@ -101,7 +101,6 @@ void netsender_tcp_client::thread_recv_proc()
         if (bytesRead <= 0) {
             // 客户端连接断开或出错，关闭套接字
             close(m_socket);
-	    cout << " close socket! in handleClient!" << endl;
             break;
         }
 
@@ -114,7 +113,7 @@ void netsender_tcp_client::thread_recv_proc()
 }
 
 
-void netsender_tcp_client::stopRecvThread()
+void netsender_tcp_client::stop_recv_thread()
 {
     m_exit = true;
 
