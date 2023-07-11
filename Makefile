@@ -13,6 +13,7 @@ SRC_C := $(wildcard *.c)
 OBJS_C := $(subst .c,.o, $(SRC_C))
 D_FILE_C := $(subst .c,.d, $(SRC_C))
 
+all : $(TARGET)
 $(TARGET) : $(OBJS) $(OBJS_C)
 #	$(CXX) -o $(TARGET) $(LD_LIBS) $(LOCAL_LDLIBS) $(LIB_EX_DIR) $^
 #	$(CXX) -o $(TARGET) $^ `pkg-config opencv4 --cflags --libs`

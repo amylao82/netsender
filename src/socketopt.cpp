@@ -25,13 +25,3 @@ void socketopt::set_opt_value(int level, int opt_name, int value)
 }
 
 
-void socketopt::set_socket_option(int socket)
-{
-    vector<opt_item>::iterator it;
-
-    for(it = m_vector.begin(); it != m_vector.end(); ++it)
-    {
-	setsockopt(socket, it->m_level, it->m_opt_name, it->m_data, it->m_len);
-    }
-}
-

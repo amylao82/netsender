@@ -75,13 +75,26 @@ bool netsender_udp::initServer(socketopt* opt)
     int bRet;
     struct sockaddr_in* ser_addr = (struct sockaddr_in*)&m_svrSockAddr;
 
-    if(false == create_socket(opt))
+    bRet = open_socket(SOCK_DGRAM);
+    if (false == bRet)
+    {
 	return false;
+    }
+
+
+    set_socket_option(opt);
+
+#ifdef PLATFORM_WINDOWS
+    //在windows平台下,不能使用shutdown(m_socket, SHUT_RDWR);来结束阻塞recvfrom调用.只能使用非阻塞socket来工作.
+    //但在linux下,可以使用阻塞recvfrom来读数据,减少资源使用.
+    set_socket_timeout(3);
+#endif
 
     memset(ser_addr, 0, sizeof(&ser_addr));
     ser_addr->sin_family = AF_INET;
     ser_addr->sin_addr.s_addr = htonl(INADDR_ANY); //IP地址，需要进行网络序转换，INADDR_ANY：本地地址
 						   //设置为广播地址.
+
     ser_addr->sin_port = htons(m_port);  //端口号，需要网络序转换
 
     //如果为广播,需要设置socket属性.addr也需要修改
@@ -117,19 +130,25 @@ bool netsender_udp::connectServer(std::string strServer, socketopt* opt)
     bool bRet;
     struct sockaddr_in* ser_addr = (struct sockaddr_in*)&m_svrSockAddr;
 
-    if(false == create_socket(opt))
-	return false;
 
-    //如果传进来的是一个域名,需要通过域名获取一个host.
-    struct hostent *host = gethostbyname(strServer.c_str());
+    bRet = open_socket(SOCK_DGRAM);
+    if (false == bRet)
+    {
+	return false;
+    }
+
+    set_socket_option(opt);
+
+#ifdef PLATFORM_WINDOWS
+    //在windows平台下,不能使用shutdown(m_socket, SHUT_RDWR);来结束阻塞recvfrom调用.只能使用非阻塞socket来工作.
+    //但在linux下,可以使用阻塞recvfrom来读数据,减少资源使用.
+    set_socket_timeout(3);
+#endif
 
     memset(ser_addr, 0, sizeof(struct sockaddr_in));
     ser_addr->sin_family = AF_INET;
 
-    if(host != nullptr)
-	ser_addr->sin_addr.s_addr = inet_addr(inet_ntoa( *(struct in_addr*)host->h_addr_list[0] ));
-    else
-	ser_addr->sin_addr.s_addr = inet_addr(strServer.c_str());
+    ser_addr->sin_addr.s_addr = get_net_addr(m_server);
 
     ser_addr->sin_port = htons(m_port);  //注意网络序转换
 
@@ -179,13 +198,6 @@ void netsender_udp::stop_recv_thread()
 {
     m_bexit = true;
 
-    //关闭读写通道,否则无法退出recvfrom的调用线程.
-#ifdef PLATFORM_WINDOWS
-    shutdown(m_socket, SD_BOTH);
-#else
-    shutdown(m_socket, SHUT_RDWR);
-#endif
-
 //    m_thread_recv->join();
 //    m_thread_recv.reset();
 }
@@ -211,7 +223,6 @@ void netsender_udp::set_socket_timeout(int timeout_sec)
 
     m_socket_mode_block_io = false;
 }
-
 
 void netsender_udp::thread_recv_proc()
 {
@@ -245,49 +256,10 @@ void netsender_udp::thread_recv_proc()
 	if(count == 0)
 	    continue;
 
-	m_protocol_iface->recv_data((const SOCKETINFO&)client_addr, buf, len);
+	m_protocol_iface->recv_data(buf, len, (const SOCKETINFO&)client_addr);
     }
 
     //printf("end thread receive\n");
-
-}
-
-bool netsender_udp::disconnect()
-{
-    //cout << "netsender_udp disconnect " << endl;
-    if(m_socket >= 0)
-    {
-#ifdef PLATFORM_WINDOWS
-	closesocket(m_socket);
-#else
-	close(m_socket);
-#endif
-	m_socket = -1;
-    }
-    //cout << "netsender_udp disconnect end" << endl;
-
-    return true;
-}
-
-bool netsender_udp::create_socket(socketopt* opt)
-{
-    m_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    if(m_socket < 0)
-    {
-	printf("create socket fail!\n");
-	return false;
-    }
-
-    if(opt != nullptr)
-	opt->set_socket_option(m_socket);
-
-#ifdef PLATFORM_WINDOWS
-    //在windows平台下,不能使用shutdown(m_socket, SHUT_RDWR);来结束阻塞recvfrom调用.只能使用非阻塞socket来工作.
-    //但在linux下,可以使用阻塞recvfrom来读数据,减少资源使用.
-    set_socket_timeout(3);
-#endif
-
-    return true;
 }
 
 bool netsender_udp::set_socket_broadcast()

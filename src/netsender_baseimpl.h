@@ -14,9 +14,20 @@ class netsender_base_impl: public netsender
 
 	virtual ~netsender_base_impl();
 
+	//从netsender继承过来的接口.
+	virtual bool disconnect();
+
 	virtual bool init(socketopt* opt) = 0;
 
     protected:
+
+	//type可以取值SOCK_STREAM/SOCK_DGRAM
+	bool open_socket(int type);
+	bool close_socket();
+
+	void set_socket_option(socketopt* opt);
+	//从网络地址或者域名里得到in_addr_t信息
+	in_addr_t get_net_addr(string str_dest);
 
     protected:
 	string m_server;

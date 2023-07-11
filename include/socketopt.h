@@ -67,10 +67,6 @@ class socketopt
 	void set_opt_value(int level, int opt_name, const void* data, int len);
 	void set_opt_value(int level, int opt_name, int value);
 
-	//把值设置到socket里去.
-	void set_socket_option(int socket);
-
-    protected:
 	vector<opt_item> m_vector;
 };
 

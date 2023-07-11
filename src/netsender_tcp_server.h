@@ -30,8 +30,6 @@ class netsender_tcp_server:public netsender_base_impl
 	virtual int send_buf(std::string str, const SOCKETINFO* socketinfo);
 	virtual int send_buf(const char* data, int len, const SOCKETINFO* socketinfo);
 
-	virtual bool disconnect();
-
     public:
 	//非继承来的对外函数.
 	netsender_tcp_server(string server, int port, protocol_interface* protocol);

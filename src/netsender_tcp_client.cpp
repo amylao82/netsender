@@ -14,28 +14,22 @@ netsender_tcp_client::~netsender_tcp_client()
     disconnect();
 }
 
-
 bool netsender_tcp_client::init(socketopt* opt)
 {
     struct sockaddr_in ser_addr {};
 
+    bool ret;
+
     // 创建客户端套接字
-    m_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (m_socket == -1) {
-        std::cerr << "无法创建套接字" << std::endl;
-        return false;
+    ret = open_socket(SOCK_STREAM);
+    if (false == ret)
+    {
+	return false;
     }
 
-    if(opt != nullptr)
-	opt->set_socket_option(m_socket);
+    set_socket_option(opt);
 
-    //如果传进来的是一个域名,需要通过域名获取一个host.
-    struct hostent *host = gethostbyname(m_server.c_str());
-
-    if(host != nullptr)
-	ser_addr.sin_addr.s_addr = inet_addr(inet_ntoa( *(struct in_addr*)host->h_addr_list[0] ));
-    else
-	ser_addr.sin_addr.s_addr = inet_addr(m_server.c_str());
+    ser_addr.sin_addr.s_addr = get_net_addr(m_server);
 
     // 准备服务器地址和端口
     ser_addr.sin_family = AF_INET;
@@ -57,17 +51,6 @@ bool netsender_tcp_client::init(socketopt* opt)
 bool netsender_tcp_client::isConnect()
 {
     return m_socket != -1;
-}
-
-bool netsender_tcp_client::disconnect()
-{
-    if(m_socket == -1)
-	return true;
-
-    close(m_socket);
-    m_socket = -1;
-
-    return true;
 }
 
 int netsender_tcp_client::send_buf(std::string str, const SOCKETINFO* socketinfo)
@@ -105,7 +88,7 @@ void netsender_tcp_client::thread_recv_proc()
         }
 
         // 处理客户端消息...
-	m_protocol_iface->recv_data(socketinfo, buffer, bytesRead);
+	m_protocol_iface->recv_data(buffer, bytesRead, socketinfo);
 
         // 清空缓冲区
         std::memset(buffer, 0, sizeof(buffer));
@@ -116,12 +99,4 @@ void netsender_tcp_client::thread_recv_proc()
 void netsender_tcp_client::stop_recv_thread()
 {
     m_exit = true;
-
-    //关闭读写通道,否则无法退出recvfrom的调用线程.
-#ifdef PLATFORM_WINDOWS
-    shutdown(m_socket, SD_BOTH);
-#else
-    shutdown(m_socket, SHUT_RDWR);
-#endif
-
 }

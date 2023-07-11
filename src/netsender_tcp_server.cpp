@@ -18,16 +18,15 @@ bool netsender_tcp_server::init(socketopt* opt)
     int iret;
     struct sockaddr_in* ser_addr = (struct sockaddr_in*)&m_svrSockAddr;
 
-    m_socket = socket(AF_INET, SOCK_STREAM, 0); //AF_INET:IPV4;SOCK_DGRAM:UDP
-    if(m_socket < 0)
+    bool ret;
+    ret = open_socket(SOCK_STREAM);
+    if (false == ret)
     {
-	printf("create socket fail!\n");
 	return false;
     }
 
     //设置socket的参数
-    if(opt != nullptr)
-	opt->set_socket_option(m_socket);
+    set_socket_option(opt);
 
     memset(ser_addr, 0, sizeof(&ser_addr));
     ser_addr->sin_family = AF_INET;
@@ -100,7 +99,7 @@ void netsender_tcp_server::thread_client_proc(SOCKETINFO client_socket)
         }
 
         // 处理客户端消息...
-	m_protocol_iface->recv_data(client_socket, buffer, bytesRead);
+	m_protocol_iface->recv_data(buffer, bytesRead, client_socket);
 
         // 清空缓冲区
         std::memset(buffer, 0, sizeof(buffer));
@@ -122,18 +121,6 @@ int netsender_tcp_server::send_buf(const char* data, int len, const SOCKETINFO* 
     return len;
 }
 
-
-bool netsender_tcp_server::disconnect()
-{
-    if(m_socket >= 0)
-    {
-	close(m_socket);
-	m_socket = -1;
-    }
-
-    return true;
-}
-
 bool netsender_tcp_server::isConnect()
 {
     return true;
@@ -143,11 +130,6 @@ void netsender_tcp_server::stop_recv_thread()
 {
     m_exit = true;
 
-    //关闭读写通道,否则无法退出recvfrom的调用线程.
-#ifdef PLATFORM_WINDOWS
-    shutdown(m_socket, SD_BOTH);
-#else
-    shutdown(m_socket, SHUT_RDWR);
-#endif
-
+    //TODO: 这里关闭的只是主socket,而不是针对每个客户socket来关闭,会有问题.
+    //下一版把每个客户端设为select/poll模型时修改.
 }

@@ -12,8 +12,6 @@ class netsender_udp: public netsender_base_impl
 	virtual int send_buf(std::string str, const SOCKETINFO* socketinfo);
 	virtual int send_buf(const char* data, int len, const SOCKETINFO* socketinfo);
 
-	virtual bool disconnect();
-
 	virtual bool init(socketopt* opt);
 
     public:
@@ -34,7 +32,6 @@ class netsender_udp: public netsender_base_impl
 	bool initServer(socketopt* opt = nullptr);
 	bool connectServer(std::string strSever, socketopt* opt = nullptr);
 
-	bool create_socket(socketopt* opt = nullptr);
 	void set_socket_timeout(int timeout_sec);
 	//设置socket的广播属性.
 	bool set_socket_broadcast();

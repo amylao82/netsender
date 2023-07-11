@@ -9,6 +9,11 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
     bool ret;
     netsender* p = nullptr;
 
+    //如果没有数据处理模块,返回错误.
+    //一个正常的网络程序,都应该有数据处理模块.
+    if(protocol_iface == nullptr)
+	return nullptr;
+
     switch(protocol)
     {
 	case netsender::PROTOCOL_UDP:
@@ -74,25 +79,4 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
     }
 }
 
-
-//netsender::netsender()
-//    : m_protocol_iface(nullptr)
-//{
-//#ifdef PLATFORM_WINDOWS
-//    WSADATA wsaData;
-//    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-//    {
-//	std::cerr << "Call to WSAStartup failed." << std::endl;
-//    }
-//#endif
-//}
-//
-//netsender::~netsender()
-//{
-//#ifdef PLATFORM_WINDOWS
-//    WSACleanup();
-//#endif
-//
-//    m_protocol_iface = nullptr;
-//}
 
