@@ -8,7 +8,6 @@
 
 class netsender_tcp_client : public netsender_base_impl
 {
-    constexpr static int BUFFER_SIZE = 2048;
     public:
 	//继承来的对外接口
 	virtual bool isConnect();
