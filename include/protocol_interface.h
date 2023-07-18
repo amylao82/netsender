@@ -53,14 +53,14 @@ class protocol_interface
 	{
 	};
 
-	virtual void recv_data(void* data, int len, const SOCKETINFO& socket);
+	virtual void recv_data(char* data, int len, const SOCKETINFO& socket);
 
 
 	//发送函数提供继承,内部可能要增加帧头.
-	virtual int send_data(const void* data, int len);
+	virtual int send_data(const char* data, int len);
 	virtual int send_data(string str);
 	//只有服务器端回应客户时,才会有socket参数.
-	virtual int send_data(const void* data, int len, const SOCKETINFO& socket);
+	virtual int send_data(const char* data, int len, const SOCKETINFO& socket);
 	virtual int send_data(string str, const SOCKETINFO& socket);
 
 
