@@ -38,33 +38,15 @@ bool netsender_udp::init(socketopt* opt)
 
 }
 
-//对于客户端,只能往服务器上发.
-//int netsender_udp::send_buf(std::string str)
-//{
-//    return send_buf(str.c_str(), str.length());
-//}
-
-//对于服务端,需要指定往哪一个客户端发送数据.
-int netsender_udp::send_buf(std::string str, const SOCKETINFO* socketinfo)
-{
-    return send_buf(str.c_str(), str.length(), socketinfo);
-}
-
-//int netsender_udp::send_buf(const char* data, int len)
-//{
-//    sendto(m_socket, data, len, 0, &m_svrSockAddr, sizeof(m_svrSockAddr));
-//    return 1;
-//}
-
-//对于服务端,需要指定往哪一个客户端发送数据.
-int netsender_udp::send_buf(const char* data, int len, const SOCKETINFO* socketinfo_in)
+int netsender_udp::send_internal(const SOCKETINFO* socketinfo_in)
 {
     const SOCKETINFO* socketinfo = socketinfo_in;
     if(socketinfo == nullptr)
 	socketinfo = &m_svrSockAddr;
 
-    sendto(m_socket, data, len, 0, &socketinfo->udp.socket, sizeof(*socketinfo));
-    return len;
+    sendto(m_socket, &m_vecSend[0], m_vecSend.size(), 0, &socketinfo->udp.socket, sizeof(*socketinfo));
+
+    return m_vecSend.size();
 }
 
 bool netsender_udp::initServer(socketopt* opt)
@@ -254,7 +236,7 @@ void netsender_udp::thread_recv_proc()
 	    continue;
 
 	//printf("udp recvfrom len = %d\n", recv_count);
-	m_protocol_iface->recv_data(buf, recv_count, (const SOCKETINFO&)client_addr);
+	m_protocol_iface->recv_data(buf + sizeof(MSGHEAD), recv_count - sizeof(MSGHEAD), (const SOCKETINFO&)client_addr);
     }
 
     //printf("end thread receive\n");

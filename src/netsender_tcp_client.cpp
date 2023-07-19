@@ -53,16 +53,11 @@ bool netsender_tcp_client::isConnect()
     return m_socket != -1;
 }
 
-int netsender_tcp_client::send_buf(std::string str, const SOCKETINFO* socketinfo)
-{
-    return send_buf(str.c_str(), str.size(), socketinfo);
-}
-
-int netsender_tcp_client::send_buf(const char* data, int len, const SOCKETINFO* socketinfo)
+int netsender_tcp_client::send_internal(const SOCKETINFO* socketinfo)
 {
     //只能往服务器上发.
-    send(m_socket, data,len, 0);
-    return len;
+    send(m_socket, &m_vecSend[0], m_vecSend.size(), 0);
+    return m_vecSend.size();
 }
 
 void netsender_tcp_client::thread_recv(netsender_tcp_client* args)
@@ -75,24 +70,53 @@ void netsender_tcp_client::thread_recv_proc()
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, sizeof(buffer));
 
+    MSGHEAD* p = (MSGHEAD*)buffer;
+    char* pData = buffer + sizeof(MSGHEAD);
+
     SOCKETINFO socketinfo;
     socketinfo.tcp.socket = m_socket;
 
+    int bytesRead;
     while(!m_exit)
     {
-        int bytesRead = recv(m_socket, buffer, sizeof(buffer) - 1, 0);
+	//取同步字
+        bytesRead = recv(m_socket, &buffer[0], 1, 0);
         if (bytesRead <= 0) {
-            // 客户端连接断开或出错，关闭套接字
-            close(m_socket);
+            break;
+        }
+	if(buffer[0] != SYNC1)
+	    continue;
+
+        bytesRead = recv(m_socket, &buffer[1], 1, 0);
+        if (bytesRead <= 0) {
+            break;
+        }
+	if(buffer[1] != SYNC2)
+	    continue;
+
+        bytesRead = recv(m_socket, &buffer[2], 2, 0);
+        if (bytesRead <= 0) {
+            break;
+        }
+
+	//取到的数据长度为0,不处理.
+	if(p->msg_len == 0)
+	    continue;
+
+        int bytesRead = recv(m_socket, pData, p->msg_len, 0);
+        if (bytesRead <= 0) {
             break;
         }
 
         // 处理客户端消息...
-	m_protocol_iface->recv_data(buffer, bytesRead, socketinfo);
+	m_protocol_iface->recv_data(pData, bytesRead, socketinfo);
 
         // 清空缓冲区
         std::memset(buffer, 0, sizeof(buffer));
     }
+
+    // 客户端连接断开或出错，关闭套接字
+    close(m_socket);
 }
 
 

@@ -27,8 +27,7 @@ class netsender_tcp_server:public netsender_base_impl
     public:
 	//继承来的对外接口
 	virtual bool isConnect();
-	virtual int send_buf(std::string str, const SOCKETINFO* socketinfo);
-	virtual int send_buf(const char* data, int len, const SOCKETINFO* socketinfo);
+	virtual int send_internal(const SOCKETINFO* socketinfo);
 
     public:
 	//非继承来的对外函数.
@@ -48,9 +47,6 @@ class netsender_tcp_server:public netsender_base_impl
 
 	void stop_recv_thread();
     protected:
-
-//	int m_socket;
-//	int m_port;
 
 	struct sockaddr m_svrSockAddr;
 

@@ -84,3 +84,25 @@ bool netsender_base_impl::disconnect()
     close_socket();
     return true;
 }
+
+int netsender_base_impl::send_buf(std::string str, const SOCKETINFO* socketinfo)
+{
+    return send_buf(str.c_str(), str.size(), socketinfo);
+}
+
+int netsender_base_impl::send_buf(const char* data, int len, const SOCKETINFO* socketinfo)
+{
+    m_vecSend.reserve(BUFFER_SIZE);
+
+    m_vecSend.erase(m_vecSend.begin(), m_vecSend.end());
+
+    m_msghead.syncword[0] = SYNC1;
+    m_msghead.syncword[1] = SYNC2;
+    m_msghead.msg_len = len;
+    m_vecSend.insert(m_vecSend.end(), (char*)&m_msghead, (char*)&m_msghead + sizeof(m_msghead));
+
+    m_vecSend.insert(m_vecSend.end(), data, data + len);
+
+    return send_internal(socketinfo);
+}
+

@@ -7,6 +7,18 @@
 class netsender_base_impl: public netsender
 {
     protected:
+	//用于读取流时帧分割.
+	typedef struct _MSGHEAD {
+	    char syncword[2];
+	    uint16_t msg_len;
+	} MSGHEAD;
+
+	//二个同步字.
+	const static char SYNC1 = 'A';
+	const static char SYNC2 = 'M';
+
+	MSGHEAD m_msghead;
+
 	constexpr static int BUFFER_SIZE = 1536;
 
     public:
@@ -17,8 +29,14 @@ class netsender_base_impl: public netsender
 	//从netsender继承过来的接口.
 	virtual bool disconnect();
 
+	virtual int send_buf(std::string str, const SOCKETINFO* socketinfo = nullptr);
+	virtual int send_buf(const char* data, int len, const SOCKETINFO* socketinfo = nullptr);
+
 	virtual bool init(socketopt* opt) = 0;
 
+
+	//内部发送函数.加上同步字后发送,子类必须实现
+	virtual int send_internal(const SOCKETINFO* socketinfo = nullptr) = 0;
     protected:
 
 	//type可以取值SOCK_STREAM/SOCK_DGRAM
@@ -36,6 +54,9 @@ class netsender_base_impl: public netsender
 //	socketopt* opt;
 
 	int m_socket;
+
+	//用来组帧往外发.
+	vector<char> m_vecSend;
 };
 
 #endif

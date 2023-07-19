@@ -28,6 +28,7 @@
 #include <string>
 #include <memory>
 
+#include "protocol_general.h"
 
 using namespace std;
 
@@ -48,11 +49,18 @@ typedef union {
 
 class protocol_interface
 {
+
     public:
 	virtual ~protocol_interface()
 	{
 	};
 
+	//协议头的定义,网络接收时,需要知道同步字,帧头长度.
+	//TCP协议里,需要知道帧同步字,帧头,才能在读取时把每一包数据分割开来.
+//	virtual uint32_t synchead() = 0;
+//	virtual uint32_t head_size() = 0;
+
+	//接收数据接口
 	virtual void recv_data(char* data, int len, const SOCKETINFO& socket);
 
 
