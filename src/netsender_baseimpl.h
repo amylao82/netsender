@@ -7,7 +7,7 @@
 class netsender_base_impl: public netsender
 {
     protected:
-	constexpr static int BUFFER_SIZE = 2048;
+	constexpr static int BUFFER_SIZE = 1536;
 
     public:
 	netsender_base_impl(string server, int port, protocol_interface* protocol_iface);

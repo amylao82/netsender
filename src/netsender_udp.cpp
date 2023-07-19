@@ -1,9 +1,6 @@
 ﻿
 #include "netsender_udp.h"
 
-#define SERVER_PORT 8003 
-#define BUFF_LEN 1024
-
 netsender_udp::netsender_udp(NETSENDER_TYPE type, string server, int port, protocol_interface* protocol_iface)
     :netsender_base_impl(server, port, protocol_iface)
     , m_type(type)
@@ -226,21 +223,21 @@ void netsender_udp::set_socket_timeout(int timeout_sec)
 
 void netsender_udp::thread_recv_proc()
 {
-    char buf[BUFF_LEN];  //接收缓冲区，1024字节
+    char buf[BUFFER_SIZE];  //接收缓冲区，1024字节
     socklen_t len;
-    int count;
+    int recv_count;
     struct sockaddr_in client_addr;  //client_addr用于记录发送方的地址信息
 
     while(!m_bexit)
     {
-	memset(buf, 0, BUFF_LEN);
+	memset(buf, 0, BUFFER_SIZE);
 	len = sizeof(client_addr);
 	//这个要想办法在退出时结束一下.暂时先不考虑.
 	//使用shutdown结束.
-	count = recvfrom(m_socket, buf, BUFF_LEN, 0, (struct sockaddr*)&client_addr, &len);  //recvfrom是阻塞函数，没有数据就一直阻塞
+	recv_count = recvfrom(m_socket, buf, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &len);  //recvfrom是阻塞函数，没有数据就一直阻塞
 
 	//windows平台因为使用的是超时机制，在超时时会返回-1。
-	if(count == -1)
+	if(recv_count == -1)
 	{
 	    if(m_socket_mode_block_io)
 	    {
@@ -253,10 +250,11 @@ void netsender_udp::thread_recv_proc()
 	}
 
 	//如果接收到的长度为0.说明是使用shutdown函数结束时退出recvfrom.
-	if(count == 0)
+	if(recv_count == 0)
 	    continue;
 
-	m_protocol_iface->recv_data(buf, len, (const SOCKETINFO&)client_addr);
+	//printf("udp recvfrom len = %d\n", recv_count);
+	m_protocol_iface->recv_data(buf, recv_count, (const SOCKETINFO&)client_addr);
     }
 
     //printf("end thread receive\n");

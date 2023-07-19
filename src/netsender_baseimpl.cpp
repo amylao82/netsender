@@ -1,5 +1,7 @@
 
 #include "netsender_baseimpl.h"
+#include <stdio.h>
+
 
 netsender_base_impl::netsender_base_impl(string server, int port, protocol_interface* protocol_iface)
     :netsender()
@@ -78,6 +80,7 @@ in_addr_t netsender_base_impl::get_net_addr(string str_dest)
 
 bool netsender_base_impl::disconnect()
 {
+//    printf("base_impl::disconnect\n");
     close_socket();
     return true;
 }
