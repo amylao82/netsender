@@ -13,6 +13,12 @@
 // 	在windows下,可以写set_opt_value(SOL_SOCKET, SO_SNDTIMEO, timeout);
 //
 // amy(amylao82@hotmail)
+//
+// 通过实际使用,发现这个类的实现有点问题.
+// 如果在创建了UDP连接,但是又设置了TCP_NODELAY,网络发送会不能工作.
+// 即是TCP和UDP的参数不能相互使用.但这个类里却可以设置.
+// 这个在后续想想别的实现方法规避.
+//
 // ======================================================
 
 #ifndef _SOCKETOPT_H_
