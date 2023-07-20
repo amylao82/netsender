@@ -2,6 +2,8 @@
 # 静态库名称和目标文件列表
 TARGET := libnetsender.a
 
+CXX := $(CROSS_COMPILE)g++
+
 INC_DIR := -Iinclude
 CFLAGS := -g
 
