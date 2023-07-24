@@ -13,16 +13,25 @@
 #include "protocol_general.h"
 #include "recvcb_interface.h"
 
+#include "netsender.h"
+
 using namespace std;
 
-class netsender;
+//class netsender;
 
 class protocol_interface: public recvcb_interface
 {
 
     public:
+	protocol_interface() : m_netsender(nullptr) {};
+
 	virtual ~protocol_interface()
 	{
+	    if(m_netsender != nullptr)
+	    {
+		m_netsender.reset();
+		m_netsender = nullptr;
+	    }
 	};
 
 	//接收数据接口
@@ -37,13 +46,21 @@ class protocol_interface: public recvcb_interface
 	virtual int send_data(const char* data, int len, const SOCKETINFO& socket);
 	virtual int send_data(string str, const SOCKETINFO& socket);
 
+	//创建一个网络发送者.与后面的set_netsender只选一个.
+//	virtual bool create_sender() = 0;
 
-	void set_netsender(shared_ptr<netsender> sender)
-	{
-	    m_netsender = sender;
-	}
+	virtual bool create_sender(netsender::PROTOCOL_TYPE protocol	//使用的连接协议
+		, netsender::NETSENDER_TYPE type	//服务器还是客户端
+		, std::string connectServer		//要连接的服务器地址,
+		, int port				//使用的端口
+		, socketopt* opt = nullptr);		//对socket的额外设置
 
-    private:
+//	void set_netsender(shared_ptr<netsender> sender)
+//	{
+//	    m_netsender = sender;
+//	}
+
+    protected:
 	shared_ptr<netsender> m_netsender;
 };
 
