@@ -1,7 +1,7 @@
 ﻿
 #include "netsender_udp.h"
 
-netsender_udp::netsender_udp(NETSENDER_TYPE type, string server, int port, protocol_interface* protocol_iface)
+netsender_udp::netsender_udp(NETSENDER_TYPE type, string server, int port, recvcb_interface* protocol_iface)
     :netsender_base_impl(server, port, protocol_iface)
     , m_type(type)
 //    , m_port(port)
@@ -210,6 +210,11 @@ void netsender_udp::thread_recv_proc()
     int recv_count;
     struct sockaddr_in client_addr;  //client_addr用于记录发送方的地址信息
 
+    MSGHEAD* p = (MSGHEAD*)buf;
+    char* pData = buf + sizeof(MSGHEAD);
+
+    shared_ptr<recvcb_interface::recv_packet> packet;
+
     while(!m_bexit)
     {
 	memset(buf, 0, BUFFER_SIZE);
@@ -236,7 +241,11 @@ void netsender_udp::thread_recv_proc()
 	    continue;
 
 	//printf("udp recvfrom len = %d\n", recv_count);
-	m_protocol_iface->recv_data(buf + sizeof(MSGHEAD), recv_count - sizeof(MSGHEAD), (const SOCKETINFO&)client_addr);
+	//m_protocol_iface->recv_data(buf + sizeof(MSGHEAD), recv_count - sizeof(MSGHEAD), (const SOCKETINFO&)client_addr);
+
+//	packet.reset(new recvcb_interface::recv_packet(pData, recv_count - sizeof(MSGHEAD), (const SOCKETINFO&)client_addr));
+//	m_protocol_iface->recv_data(packet);
+	call_callback(pData, recv_count - sizeof(MSGHEAD), *(const SOCKETINFO*)&client_addr);
     }
 
     //printf("end thread receive\n");

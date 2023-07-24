@@ -10,44 +10,14 @@
 #ifndef _PROTOCOL_INTERFACE_H_
 #define _PROTOCOL_INTERFACE_H_
 
-#ifdef PLATFORM_WINDOWS
-#include <winsock2.h>
-#include<ws2tcpip.h>
-#include <windows.h>
-#else
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#endif
-
-#include <string>
-#include <memory>
-
 #include "protocol_general.h"
+#include "recvcb_interface.h"
 
 using namespace std;
 
 class netsender;
 
-//定义一个返回的结构体,里面包含接收到数据的相关信息.
-//如果是udp,里面是struct sockaddr
-//如果是TCP,里面是socket.
-//如果是WEBSOCKET,里面是websocket相关的接口信息.
-typedef union {
-    struct _udp {
-	struct sockaddr socket;
-    } udp;
-    struct _tcp {
-	int socket;
-    } tcp;
-} SOCKETINFO;
-
-class protocol_interface
+class protocol_interface: public recvcb_interface
 {
 
     public:
@@ -55,13 +25,9 @@ class protocol_interface
 	{
 	};
 
-	//协议头的定义,网络接收时,需要知道同步字,帧头长度.
-	//TCP协议里,需要知道帧同步字,帧头,才能在读取时把每一包数据分割开来.
-//	virtual uint32_t synchead() = 0;
-//	virtual uint32_t head_size() = 0;
-
 	//接收数据接口
-	virtual void recv_data(char* data, int len, const SOCKETINFO& socket);
+//	virtual void recv_data(char* data, int len, const SOCKETINFO& socket);
+//	virtual void recv_data(shared_ptr<recv_packet> packet);
 
 
 	//发送函数提供继承,内部可能要增加帧头.
@@ -72,15 +38,13 @@ class protocol_interface
 	virtual int send_data(string str, const SOCKETINFO& socket);
 
 
-	void set_netsender(netsender* sender)
+	void set_netsender(shared_ptr<netsender> sender)
 	{
 	    m_netsender = sender;
 	}
 
     private:
-	//shared_ptr<netsender> m_netsender;
-	netsender* m_netsender;
-
+	shared_ptr<netsender> m_netsender;
 };
 
 #endif

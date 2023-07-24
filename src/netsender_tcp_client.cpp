@@ -1,7 +1,7 @@
 
 #include "netsender_tcp_client.h"
 
-netsender_tcp_client::netsender_tcp_client(string server, int port, protocol_interface* protocol)
+netsender_tcp_client::netsender_tcp_client(string server, int port, recvcb_interface* protocol)
     :netsender_base_impl(server, port, protocol)
      ,m_exit(true)
 {
@@ -76,26 +76,44 @@ void netsender_tcp_client::thread_recv_proc()
     SOCKETINFO socketinfo;
     socketinfo.tcp.socket = m_socket;
 
+
+    bool bconnect_break = false;
+
     int bytesRead;
+
+    //真实的数据长度.
+    int data_len;
+
+    int drop_cnt = 0;
+
     while(!m_exit)
     {
 	//取同步字
         bytesRead = recv(m_socket, &buffer[0], 1, 0);
         if (bytesRead <= 0) {
+	    bconnect_break = true;
             break;
         }
 	if(buffer[0] != SYNC1)
+	{
+	    ++drop_cnt;
 	    continue;
+	}
 
         bytesRead = recv(m_socket, &buffer[1], 1, 0);
         if (bytesRead <= 0) {
+	    bconnect_break = true;
             break;
         }
 	if(buffer[1] != SYNC2)
+	{
+	    ++drop_cnt;
 	    continue;
+	}
 
         bytesRead = recv(m_socket, &buffer[2], 2, 0);
         if (bytesRead <= 0) {
+	    bconnect_break = true;
             break;
         }
 
@@ -103,13 +121,34 @@ void netsender_tcp_client::thread_recv_proc()
 	if(p->msg_len == 0)
 	    continue;
 
-        int bytesRead = recv(m_socket, pData, p->msg_len, 0);
-        if (bytesRead <= 0) {
-            break;
-        }
+	data_len = 0;
+	while(data_len != p->msg_len)
+	{
+	    bytesRead = recv(m_socket, pData + data_len, p->msg_len - data_len, 0);
+	    if(bytesRead <= 0)
+	    {
+		bconnect_break = true;
+		break;
+	    }
+	    data_len += bytesRead;
+	}
+
+	if(drop_cnt != 0)
+	{
+	    printf("\t\tdrop_cnt = %d\n", drop_cnt);
+	    drop_cnt = 0;
+	}
+	//如果是因为断开而到这里,不要把数据往上发.
+	if(bconnect_break)
+	    break;
+
+	if(p->msg_len != data_len)
+	{
+	    printf("recv data not enough\n");
+	}
 
         // 处理客户端消息...
-	m_protocol_iface->recv_data(pData, bytesRead, socketinfo);
+	call_callback(pData, data_len, socketinfo);
 
         // 清空缓冲区
         std::memset(buffer, 0, sizeof(buffer));

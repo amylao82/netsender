@@ -4,21 +4,21 @@
 #include "netsender_tcp_server.h"
 #include "netsender_tcp_client.h"
 
-netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, protocol_interface* protocol_iface, socketopt* opt)
+netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, recvcb_interface* recvcb_iface, socketopt* opt)
 {
     bool ret;
     netsender* p = nullptr;
 
     //如果没有数据处理模块,返回错误.
     //一个正常的网络程序,都应该有数据处理模块.
-    if(protocol_iface == nullptr)
+    if(recvcb_iface == nullptr)
 	return nullptr;
 
     switch(protocol)
     {
 	case netsender::PROTOCOL_UDP:
 	    {
-		netsender_udp* pSender = new netsender_udp(type, connectServer, port, protocol_iface);
+		netsender_udp* pSender = new netsender_udp(type, connectServer, port, recvcb_iface);
 		//如果IP地址为广播地址,需要设置广播属性.
 		if(connectServer == "255.255.255.255")
 		{
@@ -26,7 +26,7 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
 		}
 
 		//sender与protocol实例联结
-		protocol_iface->set_netsender(pSender);
+		//protocol_iface->set_netsender(pSender);
 
 
 		ret = pSender->init(opt);
@@ -44,9 +44,9 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
 	    {
 		if(type == NETSENDER_TYPE::TYPE_SERVER)
 		{
-		    netsender_tcp_server* sender = new netsender_tcp_server(connectServer, port, protocol_iface);
+		    netsender_tcp_server* sender = new netsender_tcp_server(connectServer, port, recvcb_iface);
 
-		    protocol_iface->set_netsender(sender);
+//		    protocol_iface->set_netsender(sender);
 
 		    if(false == sender->init(opt))
 		    {
@@ -58,9 +58,9 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
 		}
 		else
 		{
-		    netsender_tcp_client* sender = new netsender_tcp_client(connectServer, port, protocol_iface);
+		    netsender_tcp_client* sender = new netsender_tcp_client(connectServer, port, recvcb_iface);
 
-		    protocol_iface->set_netsender(sender);
+//		    protocol_iface->set_netsender(sender);
 
 		    if(false == sender->init(opt))
 		    {

@@ -31,7 +31,7 @@ class netsender_tcp_server:public netsender_base_impl
 
     public:
 	//非继承来的对外函数.
-	netsender_tcp_server(string server, int port, protocol_interface* protocol);
+	netsender_tcp_server(string server, int port, recvcb_interface* protocol);
 	virtual ~netsender_tcp_server();
 
 	virtual bool init(socketopt* opt = nullptr);

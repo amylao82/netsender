@@ -22,7 +22,7 @@ class netsender_base_impl: public netsender
 	constexpr static int BUFFER_SIZE = 1536;
 
     public:
-	netsender_base_impl(string server, int port, protocol_interface* protocol_iface);
+	netsender_base_impl(string server, int port, recvcb_interface* protocol_iface);
 
 	virtual ~netsender_base_impl();
 
@@ -39,6 +39,9 @@ class netsender_base_impl: public netsender
 	virtual int send_internal(const SOCKETINFO* socketinfo = nullptr) = 0;
     protected:
 
+	//调用回调函数.
+	int call_callback(char* data, int len, const SOCKETINFO& socketinfo);
+
 	//type可以取值SOCK_STREAM/SOCK_DGRAM
 	bool open_socket(int type);
 	bool close_socket();
@@ -50,7 +53,7 @@ class netsender_base_impl: public netsender
     protected:
 	string m_server;
 	int m_port;
-	protocol_interface* m_protocol_iface;
+	recvcb_interface* m_protocol_iface;
 //	socketopt* opt;
 
 	int m_socket;

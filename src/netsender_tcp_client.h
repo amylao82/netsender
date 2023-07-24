@@ -17,7 +17,7 @@ class netsender_tcp_client : public netsender_base_impl
 
     public:
 	//非继承来的对外函数.
-	netsender_tcp_client(string server, int port, protocol_interface* protocol);
+	netsender_tcp_client(string server, int port, recvcb_interface* protocol);
 	~netsender_tcp_client();
 
     protected:

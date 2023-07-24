@@ -15,7 +15,7 @@ class netsender_udp: public netsender_base_impl
 
     public:
 	//非继承来的对外函数.
-	netsender_udp(NETSENDER_TYPE type, string server, int port, protocol_interface* protocol_iface);
+	netsender_udp(NETSENDER_TYPE type, string server, int port, recvcb_interface* protocol_iface);
 	virtual ~netsender_udp();
 	//设置是否使用广播通信.
 	void set_broadcast(bool broadcast);

@@ -1,7 +1,7 @@
 
 #include "netsender_tcp_server.h"
 
-netsender_tcp_server::netsender_tcp_server(string server, int port, protocol_interface* protocol)
+netsender_tcp_server::netsender_tcp_server(string server, int port, recvcb_interface* protocol)
     :netsender_base_impl(server, port, protocol)
      ,m_exit(true)
 {
@@ -125,7 +125,7 @@ void netsender_tcp_server::thread_client_proc(SOCKETINFO client_socket)
         }
 
         // 处理客户端消息...
-	m_protocol_iface->recv_data(pData, bytesRead, client_socket);
+	call_callback(pData, bytesRead, client_socket);
 
         // 清空缓冲区
         std::memset(buffer, 0, sizeof(buffer));

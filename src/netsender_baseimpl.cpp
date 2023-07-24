@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 
-netsender_base_impl::netsender_base_impl(string server, int port, protocol_interface* protocol_iface)
+netsender_base_impl::netsender_base_impl(string server, int port, recvcb_interface* protocol_iface)
     :netsender()
      ,m_server(server)
      ,m_port(port)
@@ -104,5 +104,16 @@ int netsender_base_impl::send_buf(const char* data, int len, const SOCKETINFO* s
     m_vecSend.insert(m_vecSend.end(), data, data + len);
 
     return send_internal(socketinfo);
+}
+
+int netsender_base_impl::call_callback(char* data, int len, const SOCKETINFO& socketinfo)
+{
+    shared_ptr<recvcb_interface::recv_packet> packet;
+
+    packet.reset(new recvcb_interface::recv_packet(data, len, socketinfo));
+
+    m_protocol_iface->recv_data(packet);
+
+    return len;
 }
 

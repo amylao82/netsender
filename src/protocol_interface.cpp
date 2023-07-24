@@ -5,12 +5,6 @@
 
 #include "netsender.h"
 
-void protocol_interface::recv_data(char* data, int len, const SOCKETINFO& socket)
-{
-    printf("recv_data len = %d, data = %s\n", len, data);
-    send_data(data, len, socket);
-}
-
 int protocol_interface::send_data(const char* data, int len, const SOCKETINFO& socket)
 {
 //    printf("do send data, len = %d, data = %s\n", len, data);

@@ -34,12 +34,10 @@
 #include <net/if.h>
 #endif
 
-#include "protocol_interface.h"
+#include "recvcb_interface.h"
 #include "socketopt.h"
 
 using namespace std;
-
-class protocol_interface;
 
 class netsender {
     public:
@@ -57,7 +55,12 @@ class netsender {
 
 	//指定创建的是服务器端还是客户端, 如果是客户端,后面的参数是要连接的服务器.
 	//2023.02.20. 对于服务器端, connectServer也是需要的,因为有的设备有二个网卡,需要指定绑定到哪一个网卡上.
-	static netsender* createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, protocol_interface* protocol_iface, socketopt* opt = nullptr);
+	static netsender* createSender(netsender::PROTOCOL_TYPE protocol	//使用的连接协议
+		, netsender::NETSENDER_TYPE type	//服务器还是客户端
+		, std::string connectServer		//要连接的服务器地址,
+		, int port				//使用的端口
+		, recvcb_interface* recv_iface		//接收数据的接口
+		, socketopt* opt = nullptr);		//对socket的额外设置
 
 	virtual ~netsender() {};	//需要一个虚函数的析构函数,才能实现从基类的指针链式调用释放子类.
 
