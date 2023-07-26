@@ -37,9 +37,10 @@ bool protocol_interface::create_sender(netsender::PROTOCOL_TYPE protocol
 	, netsender::NETSENDER_TYPE type
 	, std::string connectServer
 	, int port
+	, syncword_info* syncinfo
 	, socketopt* opt)
 {
-    m_netsender.reset(netsender::createSender(protocol, type, connectServer, port, this, opt));
+    m_netsender.reset(netsender::createSender(protocol, type, connectServer, port, this, syncinfo, opt));
 
     if(m_netsender == nullptr)
     {

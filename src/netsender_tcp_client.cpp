@@ -3,7 +3,6 @@
 
 netsender_tcp_client::netsender_tcp_client(string server, int port, recvcb_interface* protocol)
     :netsender_base_impl(server, port, protocol)
-     ,m_exit(true)
 {
 }
 
@@ -41,8 +40,16 @@ bool netsender_tcp_client::init(socketopt* opt)
         return false;
     }
 
-    m_exit = false;
-    thread th(thread_recv, this);
+    m_bexit = false;
+
+    //thread th(thread_recv, this);
+
+    thread th([this]() {
+	    SOCKETINFO socketinfo;
+	    socketinfo.tcp.socket = this->m_socket;
+	    //netsender_base_impl::thread_recv(this, socketinfo);
+	    thread_recv_proc(socketinfo);
+    });
     th.detach();
 
     return true;
@@ -60,106 +67,109 @@ int netsender_tcp_client::send_internal(const SOCKETINFO* socketinfo)
     return m_vecSend.size();
 }
 
-void netsender_tcp_client::thread_recv(netsender_tcp_client* args)
-{
-    args->thread_recv_proc();
-}
-
-void netsender_tcp_client::thread_recv_proc()
-{
-    char buffer[BUFFER_SIZE];
-    memset(buffer, 0, sizeof(buffer));
-
-    MSGHEAD* p = (MSGHEAD*)buffer;
-    char* pData = buffer + sizeof(MSGHEAD);
-
-    SOCKETINFO socketinfo;
-    socketinfo.tcp.socket = m_socket;
-
-
-    bool bconnect_break = false;
-
-    int bytesRead;
-
-    //真实的数据长度.
-    int data_len;
-
-    int drop_cnt = 0;
-
-    while(!m_exit)
-    {
-	//取同步字
-        bytesRead = recv(m_socket, &buffer[0], 1, 0);
-        if (bytesRead <= 0) {
-	    bconnect_break = true;
-            break;
-        }
-	if(buffer[0] != SYNC1)
-	{
-	    ++drop_cnt;
-	    continue;
-	}
-
-        bytesRead = recv(m_socket, &buffer[1], 1, 0);
-        if (bytesRead <= 0) {
-	    bconnect_break = true;
-            break;
-        }
-	if(buffer[1] != SYNC2)
-	{
-	    ++drop_cnt;
-	    continue;
-	}
-
-        bytesRead = recv(m_socket, &buffer[2], 2, 0);
-        if (bytesRead <= 0) {
-	    bconnect_break = true;
-            break;
-        }
-
-	//取到的数据长度为0,不处理.
-	if(p->msg_len == 0)
-	    continue;
-
-	data_len = 0;
-	while(data_len != p->msg_len)
-	{
-	    bytesRead = recv(m_socket, pData + data_len, p->msg_len - data_len, 0);
-	    if(bytesRead <= 0)
-	    {
-		bconnect_break = true;
-		break;
-	    }
-	    data_len += bytesRead;
-	}
-
-	if(drop_cnt != 0)
-	{
-	    printf("\t\tdrop_cnt = %d\n", drop_cnt);
-	    drop_cnt = 0;
-	}
-	//如果是因为断开而到这里,不要把数据往上发.
-	if(bconnect_break)
-	    break;
-
-	if(p->msg_len != data_len)
-	{
-	    printf("recv data not enough\n");
-	}
-
-        // 处理客户端消息...
-	call_callback(pData, data_len, socketinfo);
-
-        // 清空缓冲区
-        std::memset(buffer, 0, sizeof(buffer));
-    }
-
-    // 客户端连接断开或出错，关闭套接字
-    close(m_socket);
-}
-
-
 void netsender_tcp_client::stop_recv_thread()
 {
-    m_exit = true;
+    m_bexit = true;
+}
+
+int netsender_tcp_client::recv_net_packet(char* buffer, int buf_len, SOCKETINFO& socketinfo)
+{
+    int len_ret = 0;
+    int bytesRead;
+    int idxRead = 0;
+
+    const syncword_info* psync = m_syncword_info.get();
+
+    if(psync == nullptr)
+	psync = &m_constsyncinfo;
+
+    char* pData = buffer + psync->m_len_head;
+    //需要读取的数据长度.
+    int msg_len;
+    int len_read = 0;	//已经读取到的长度.
+
+    //读出同步字.
+    while(idxRead < psync->m_len_field_sync_word)
+    {
+	bytesRead = recv(socketinfo.tcp.socket, &buffer[idxRead], 1, 0);
+	if(bytesRead <= 0)
+	    return RECV_NET_BROKEN;
+
+	if(buffer[idxRead] == psync->m_sync_word[idxRead])
+	    ++idxRead;
+    }
+
+    //读长度字段
+    bytesRead = recv(socketinfo.tcp.socket, &buffer[idxRead], psync->m_len_field_packetsize, 0);
+    if(bytesRead <= 0)
+	return RECV_NET_BROKEN;
+
+    len_ret += psync->m_len_head;
+
+    //如果需要转换字节序.需要交换才能知道后面的帧数据长度.
+    if(psync->m_network_order_byte)
+    {
+	//这里认为数据长度字段只有2字节和4字节.可能并不能满足所有场景.
+	if(psync->m_len_field_packetsize == 2)
+	{
+	    msg_len = protocol_general::htons(&buffer[idxRead]);
+	    *(uint16_t*)&buffer[idxRead] = *(uint16_t*)&msg_len;
+	}
+	else if(psync->m_len_field_packetsize == 4)
+	{
+	    msg_len = protocol_general::htonl(&buffer[idxRead]);
+	    *(uint32_t*)&buffer[idxRead] = protocol_general::htonl(&buffer[idxRead]);
+	}
+    }
+    else
+    {
+	if(psync->m_len_field_packetsize == 2)
+	{
+	    msg_len = *(uint16_t*)&buffer[idxRead];
+	}
+	else if(psync->m_len_field_packetsize == 4)
+	{
+	    msg_len = *(uint32_t*)&buffer[idxRead];
+	}
+    }
+
+    assert(msg_len > 0);
+
+    //如果没有设置帧头.是自己增加的帧头,把接下来接收到的整个数据返回上层.
+//    if(m_syncword_info == nullptr)
+//    {
+//	pData = buffer;
+//	len_ret = msg_len;
+//    }
+//    else 
+//    {
+//	len_ret += msg_len;
+//    }
+
+
+    len_ret += msg_len;
+
+    while(len_read != msg_len)
+    {
+	bytesRead = recv(socketinfo.tcp.socket, pData + len_read, msg_len - len_read , 0);
+	if(bytesRead <= 0)
+	    return RECV_NET_BROKEN;
+
+	len_read += bytesRead;
+    }
+
+
+//    if(m_syncword_info == nullptr)
+//    {
+//	len_ret -= m_constsyncinfo.m_len_head;
+//    }
+
+//    debug_tool::print_data(buffer, len_ret, "tcp_client");
+
+    return len_ret;
+}
+
+void netsender_tcp_client::close_communicate_socket(SOCKETINFO& socketinfo)
+{
+    close(socketinfo.tcp.socket);
 }

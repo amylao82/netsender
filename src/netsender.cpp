@@ -4,7 +4,7 @@
 #include "netsender_tcp_server.h"
 #include "netsender_tcp_client.h"
 
-netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, recvcb_interface* recvcb_iface, socketopt* opt)
+netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender::NETSENDER_TYPE type, std::string connectServer, int port, recvcb_interface* recvcb_iface, syncword_info* syncinfo, socketopt* opt)
 {
     bool ret;
     netsender* p = nullptr;

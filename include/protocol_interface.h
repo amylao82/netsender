@@ -53,6 +53,7 @@ class protocol_interface: public recvcb_interface
 		, netsender::NETSENDER_TYPE type	//服务器还是客户端
 		, std::string connectServer		//要连接的服务器地址,
 		, int port				//使用的端口
+		, syncword_info* syncinfo = nullptr
 		, socketopt* opt = nullptr);		//对socket的额外设置
 
 //	void set_netsender(shared_ptr<netsender> sender)

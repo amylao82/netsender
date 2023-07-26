@@ -9,7 +9,6 @@ netsender_udp::netsender_udp(NETSENDER_TYPE type, string server, int port, recvc
     ,  m_connectOK(false)
 //    , m_socket(-1)
     , m_socket_mode_block_io(true)
-     , m_bexit(true)
 {
 }
 
@@ -36,17 +35,6 @@ bool netsender_udp::init(socketopt* opt)
     else
 	return connectServer(m_server, opt);
 
-}
-
-int netsender_udp::send_internal(const SOCKETINFO* socketinfo_in)
-{
-    const SOCKETINFO* socketinfo = socketinfo_in;
-    if(socketinfo == nullptr)
-	socketinfo = &m_svrSockAddr;
-
-    sendto(m_socket, &m_vecSend[0], m_vecSend.size(), 0, &socketinfo->udp.socket, sizeof(*socketinfo));
-
-    return m_vecSend.size();
 }
 
 bool netsender_udp::initServer(socketopt* opt)
@@ -152,11 +140,11 @@ bool netsender_udp::connectServer(std::string strServer, socketopt* opt)
     return true;
 }
 
-void netsender_udp::thread_recv(void* args)
-{
-    netsender_udp* p = (netsender_udp*)args;
-    p->thread_recv_proc();
-}
+//void netsender_udp::thread_recv(void* args)
+//{
+//    netsender_udp* p = (netsender_udp*)args;
+//    p->thread_recv_proc();
+//}
 
 bool netsender_udp::create_recv_thread()
 {
@@ -167,7 +155,13 @@ bool netsender_udp::create_recv_thread()
 //		threadReceiveProc();
 //		}));
 
-    thread th(thread_recv, this);
+    //thread th(netsender_base_impl::thread_recv, dynamic_cast<netsender_base_impl*>(this), socketinfo);
+    //thread th(netsender_base_impl::thread_recv, (void*)this, socketinfo);
+    thread th([this]() {
+	    SOCKETINFO socketinfo;
+	    netsender_base_impl::thread_recv(this, socketinfo);
+    });
+
     th.detach();
 
     return true;
@@ -203,53 +197,53 @@ void netsender_udp::set_socket_timeout(int timeout_sec)
     m_socket_mode_block_io = false;
 }
 
-void netsender_udp::thread_recv_proc()
-{
-    char buf[BUFFER_SIZE];  //接收缓冲区，1024字节
-    socklen_t len;
-    int recv_count;
-    struct sockaddr_in client_addr;  //client_addr用于记录发送方的地址信息
-
-    MSGHEAD* p = (MSGHEAD*)buf;
-    char* pData = buf + sizeof(MSGHEAD);
-
-    shared_ptr<recvcb_interface::recv_packet> packet;
-
-    while(!m_bexit)
-    {
-	memset(buf, 0, BUFFER_SIZE);
-	len = sizeof(client_addr);
-	//这个要想办法在退出时结束一下.暂时先不考虑.
-	//使用shutdown结束.
-	recv_count = recvfrom(m_socket, buf, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &len);  //recvfrom是阻塞函数，没有数据就一直阻塞
-
-	//windows平台因为使用的是超时机制，在超时时会返回-1。
-	if(recv_count == -1)
-	{
-	    if(m_socket_mode_block_io)
-	    {
-		printf("receive data fail!\n");
-	    }
-	    else
-	    {
-		continue;
-	    }
-	}
-
-	//如果接收到的长度为0.说明是使用shutdown函数结束时退出recvfrom.
-	if(recv_count == 0)
-	    continue;
-
-	//printf("udp recvfrom len = %d\n", recv_count);
-	//m_protocol_iface->recv_data(buf + sizeof(MSGHEAD), recv_count - sizeof(MSGHEAD), (const SOCKETINFO&)client_addr);
-
-//	packet.reset(new recvcb_interface::recv_packet(pData, recv_count - sizeof(MSGHEAD), (const SOCKETINFO&)client_addr));
-//	m_protocol_iface->recv_data(packet);
-	call_callback(pData, recv_count - sizeof(MSGHEAD), *(const SOCKETINFO*)&client_addr);
-    }
-
-    //printf("end thread receive\n");
-}
+//void netsender_udp::thread_recv_proc()
+//{
+//    char buf[BUFFER_SIZE];  //接收缓冲区，1024字节
+//    socklen_t len;
+//    int recv_count;
+//    struct sockaddr_in client_addr;  //client_addr用于记录发送方的地址信息
+//
+//    MSGHEAD* p = (MSGHEAD*)buf;
+//    char* pData = buf + sizeof(MSGHEAD);
+//
+//    shared_ptr<recvcb_interface::recv_packet> packet;
+//
+//    while(!m_bexit)
+//    {
+//	memset(buf, 0, BUFFER_SIZE);
+//	len = sizeof(client_addr);
+//	//这个要想办法在退出时结束一下.暂时先不考虑.
+//	//使用shutdown结束.
+//	recv_count = recvfrom(m_socket, buf, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &len);  //recvfrom是阻塞函数，没有数据就一直阻塞
+//
+//	//windows平台因为使用的是超时机制，在超时时会返回-1。
+//	if(recv_count == -1)
+//	{
+//	    if(m_socket_mode_block_io)
+//	    {
+//		printf("receive data fail!\n");
+//	    }
+//	    else
+//	    {
+//		continue;
+//	    }
+//	}
+//
+//	//如果接收到的长度为0.说明是使用shutdown函数结束时退出recvfrom.
+//	if(recv_count == 0)
+//	    continue;
+//
+//	//printf("udp recvfrom len = %d\n", recv_count);
+//	//m_protocol_iface->recv_data(buf + sizeof(MSGHEAD), recv_count - sizeof(MSGHEAD), (const SOCKETINFO&)client_addr);
+//
+////	packet.reset(new recvcb_interface::recv_packet(pData, recv_count - sizeof(MSGHEAD), (const SOCKETINFO&)client_addr));
+////	m_protocol_iface->recv_data(packet);
+//	call_callback(pData, recv_count - sizeof(MSGHEAD), *(const SOCKETINFO*)&client_addr);
+//    }
+//
+//    //printf("end thread receive\n");
+//}
 
 bool netsender_udp::set_socket_broadcast()
 {
@@ -263,6 +257,53 @@ bool netsender_udp::set_socket_broadcast()
     }
 
     return true;
+}
+
+int netsender_udp::send_internal(const SOCKETINFO* socketinfo_in)
+{
+    const SOCKETINFO* socketinfo = socketinfo_in;
+    if(socketinfo == nullptr)
+	socketinfo = &m_svrSockAddr;
+
+    sendto(m_socket, &m_vecSend[0], m_vecSend.size(), 0, &socketinfo->udp.socket, sizeof(*socketinfo));
+
+    return m_vecSend.size();
+}
+
+int netsender_udp::recv_net_packet(char* buf, int buf_len, SOCKETINFO& socketinfo)
+{
+    int len;
+    socklen_t socket_len = sizeof(socketinfo.udp.socket);
+
+    //recvfrom是阻塞函数，没有数据就一直阻塞
+    //len = recvfrom(m_socket, buf, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &len);
+    len = recvfrom(m_socket, buf, BUFFER_SIZE, 0, &socketinfo.udp.socket, &socket_len);
+
+    //windows平台因为使用的是超时机制，在超时时会返回-1。
+    if(len == -1)
+    {
+	if(m_socket_mode_block_io)
+	{
+	    printf("receive data fail!\n");
+	    return RECV_NET_BROKEN;
+	}
+	else
+	{
+	    return RECV_NET_TIMEOUT;
+	}
+    }
+
+    //如果接收到的长度为0.说明是使用shutdown函数结束时退出recvfrom.
+    if(len == 0)
+	return RECV_NET_TIMEOUT;
+
+    return len;
+}
+
+//对于UDP,不用关闭socket.
+void netsender_udp::close_communicate_socket(SOCKETINFO& socketinfo)
+{
+    return;
 }
 
 

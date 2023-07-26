@@ -18,12 +18,14 @@
 class protocol_general
 {
     public:
-	static uint32_t htonl(uint8_t* p);
-	static uint16_t htons(uint8_t* p);
-	static uint32_t htonl(uint32_t val);
-	static uint16_t htons(uint16_t val);
+	static uint32_t htonl(const uint8_t* p);
+	static uint16_t htons(const uint8_t* p);
+	static uint32_t htonl(const char* p);
+	static uint16_t htons(const char* p);
+	static uint32_t htonl(const uint32_t val);
+	static uint16_t htons(const uint16_t val);
 
-	static uint8_t cal_checksum_xor(uint8_t* data, int len);
+	static uint8_t cal_checksum_xor(const uint8_t* data, int len);
 };
 
 #endif

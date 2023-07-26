@@ -36,6 +36,7 @@
 
 #include "recvcb_interface.h"
 #include "socketopt.h"
+#include "syncword_info.h"
 
 using namespace std;
 
@@ -60,11 +61,18 @@ class netsender {
 		, std::string connectServer		//要连接的服务器地址,
 		, int port				//使用的端口
 		, recvcb_interface* recv_iface		//接收数据的接口
+		, syncword_info* syncinfo		// 同步字相关信息
 		, socketopt* opt = nullptr);		//对socket的额外设置
 
 	virtual ~netsender() {};	//需要一个虚函数的析构函数,才能实现从基类的指针链式调用释放子类.
 
 	virtual bool isConnect() = 0;
+
+	//设置接收数据包的帧头信息,
+	//sync_word,同步字
+	//len_field_sync_word, 同步字字段的长度
+	//len_field_packetsize, 数据长度占用的字节数.
+//	virtual bool set_sync_info(string sync_word, int fieldlen_sync_word, int fieldlen_packetsize, bool network_byte_order = false) = 0;
 
 	//发送数据函数分为二组,如果是发送可读数据,使用std::string来存储,
 	//但是如果要发送的是二进制数据,需要使用char数组来存储.
@@ -75,7 +83,6 @@ class netsender {
 	virtual int send_buf(const char* data, int len, const SOCKETINFO* socketinfo = nullptr) = 0;
 
 	virtual bool disconnect() = 0;
-
 };
 
 #endif

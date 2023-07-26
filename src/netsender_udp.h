@@ -9,7 +9,6 @@ class netsender_udp: public netsender_base_impl
     public:
 	//继承来的对外接口
 	virtual bool isConnect();
-	virtual int send_internal(const SOCKETINFO* socketinfo);
 
 	virtual bool init(socketopt* opt);
 
@@ -21,10 +20,16 @@ class netsender_udp: public netsender_base_impl
 	void set_broadcast(bool broadcast);
 
     protected:
+	//继承而来的接口.
+	virtual int send_internal(const SOCKETINFO* socketinfo);
+	virtual int recv_net_packet(char* buf, int buf_len, SOCKETINFO& socketinfo);
+	virtual void close_communicate_socket(SOCKETINFO& socketinfo);
+
+    protected:
 	//不对外函数
 	//recevie thread.
-	static void thread_recv(void* args);
-	void thread_recv_proc(); 
+//	static void thread_recv(void* args);
+//	void thread_recv_proc(); 
 	bool create_recv_thread();
 	void stop_recv_thread();
 
@@ -52,7 +57,6 @@ class netsender_udp: public netsender_base_impl
 	//接收数据线程.
 	//pthread_t m_pidRecv;
 //	std::shared_ptr<std::thread> m_thread_recv;
-	bool m_bexit;
 	//struct sockaddr m_svrSockAddr;
 	SOCKETINFO m_svrSockAddr;
 //    private:
