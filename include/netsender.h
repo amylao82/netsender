@@ -68,11 +68,6 @@ class netsender {
 
 	virtual bool isConnect() = 0;
 
-	//设置接收数据包的帧头信息,
-	//sync_word,同步字
-	//len_field_sync_word, 同步字字段的长度
-	//len_field_packetsize, 数据长度占用的字节数.
-//	virtual bool set_sync_info(string sync_word, int fieldlen_sync_word, int fieldlen_packetsize, bool network_byte_order = false) = 0;
 
 	//发送数据函数分为二组,如果是发送可读数据,使用std::string来存储,
 	//但是如果要发送的是二进制数据,需要使用char数组来存储.
