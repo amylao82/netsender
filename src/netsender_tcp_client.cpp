@@ -1,8 +1,8 @@
 
 #include "netsender_tcp_client.h"
 
-netsender_tcp_client::netsender_tcp_client(string server, int port, recvcb_interface* protocol)
-    :netsender_base_impl(server, port, protocol)
+netsender_tcp_client::netsender_tcp_client(string server, int port, recvcb_interface* protocol, syncword_info* syncinfo)
+    :netsender_base_impl(server, port, protocol, syncinfo)
 {
 }
 

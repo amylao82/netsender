@@ -14,7 +14,10 @@ netsender_base_impl::netsender_base_impl(string server, int port, recvcb_interfa
      ,m_bexit(true)
 {
     //如果没有填同步信息,则自己造一个出来.
-    m_syncword_info.reset(syncinfo);
+    if(syncinfo != nullptr)
+    {
+	m_syncword_info.reset(new syncword_info(*syncinfo));
+    }
 
 #ifdef PLATFORM_WINDOWS
     WSADATA wsaData;

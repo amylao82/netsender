@@ -44,7 +44,7 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
 	    {
 		if(type == NETSENDER_TYPE::TYPE_SERVER)
 		{
-		    netsender_tcp_server* sender = new netsender_tcp_server(connectServer, port, recvcb_iface);
+		    netsender_tcp_server* sender = new netsender_tcp_server(connectServer, port, recvcb_iface, syncinfo);
 
 //		    protocol_iface->set_netsender(sender);
 
@@ -58,7 +58,7 @@ netsender* netsender::createSender(netsender::PROTOCOL_TYPE protocol, netsender:
 		}
 		else
 		{
-		    netsender_tcp_client* sender = new netsender_tcp_client(connectServer, port, recvcb_iface);
+		    netsender_tcp_client* sender = new netsender_tcp_client(connectServer, port, recvcb_iface, syncinfo);
 
 //		    protocol_iface->set_netsender(sender);
 

@@ -36,6 +36,14 @@ class syncword_info
 		m_len_head = m_len_field_sync_word + m_len_field_packetsize;
 		};
 
+	syncword_info(syncword_info& rhs)
+	    :m_sync_word(rhs.m_sync_word)
+	     ,m_len_field_sync_word(rhs.m_len_field_sync_word)
+	     ,m_len_field_packetsize(rhs.m_len_field_packetsize)
+    		,m_network_order_byte(rhs.m_network_order_byte) {
+		m_len_head = m_len_field_sync_word + m_len_field_packetsize;
+	};
+
 	bool operator==(syncword_info& rhs) const {
 	    if(m_sync_word != rhs.m_sync_word)
 		return false;
