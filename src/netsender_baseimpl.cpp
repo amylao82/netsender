@@ -2,7 +2,6 @@
 #include "netsender_baseimpl.h"
 #include <stdio.h>
 
-
 const syncword_info netsender_base_impl::m_constsyncinfo;
 
 netsender_base_impl::netsender_base_impl(string server, int port, recvcb_interface* protocol_iface, syncword_info* syncinfo)
@@ -30,6 +29,7 @@ netsender_base_impl::netsender_base_impl(string server, int port, recvcb_interfa
 
 netsender_base_impl::~netsender_base_impl()
 {
+    m_bexit = true;
 #ifdef PLATFORM_WINDOWS
     WSACleanup();
 #endif

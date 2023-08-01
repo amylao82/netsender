@@ -133,7 +133,13 @@ int netsender_tcp_client::recv_net_packet(char* buffer, int buf_len, SOCKETINFO&
 	}
     }
 
-    assert(msg_len > 0);
+//    printf("msg_len = %d\n", msg_len);
+//    assert(msg_len > 0);
+    if(msg_len <= 0)
+    {
+	//读到的长度为0,应该是出错了.
+	return 0;
+    }
 
     //如果没有设置帧头.是自己增加的帧头,把接下来接收到的整个数据返回上层.
 //    if(m_syncword_info == nullptr)
