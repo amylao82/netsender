@@ -177,5 +177,7 @@ int netsender_tcp_client::recv_net_packet(char* buffer, int buf_len, SOCKETINFO&
 
 void netsender_tcp_client::close_communicate_socket(SOCKETINFO& socketinfo)
 {
-    close(socketinfo.tcp.socket);
+// 客户端的socketinfo和m_socket是同一个,所以不用关.只有服务器端才需要对socketinfo关闭.
+//    if(socketinfo.tcp.socket != -1)
+//	close(socketinfo.tcp.socket);
 }
