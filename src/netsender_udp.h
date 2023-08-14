@@ -1,4 +1,4 @@
-﻿
+
 #ifndef _NETSENDER_UDP_H_
 #define _NETSENDER_UDP_H_
 

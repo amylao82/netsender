@@ -1,7 +1,10 @@
 
 #include "protocol_interface.h"
 #include <iostream>
+
+#ifndef PLATFORM_WINDOWS
 #include <netinet/in.h>
+#endif
 
 #include "netsender.h"
 

@@ -58,25 +58,25 @@ bool netsender_base_impl::open_socket(int type)
     return true;
 }
 
-bool netsender_base_impl::close_socket()
+bool netsender_base_impl::close_socket(int& socket)
 {
-    if(m_socket >= 0)
+    if(socket >= 0)
     {
 	//关闭读写通道,否则无法退出recvfrom的调用线程.
 #ifdef PLATFORM_WINDOWS
-	shutdown(m_socket, SD_BOTH);
-	closesocket(m_socket);
+	shutdown(socket, SD_BOTH);
+	closesocket(socket);
 #else
-	shutdown(m_socket, SHUT_RDWR);
-	close(m_socket);
+	shutdown(socket, SHUT_RDWR);
+	close(socket);
 #endif
-	m_socket = -1;
+	socket = -1;
     }
 
     return true;
 }
 
-in_addr_t netsender_base_impl::get_net_addr(string str_dest)
+uint32_t netsender_base_impl::get_net_addr(string str_dest)
 {
     //如果传进来的是一个域名,需要通过域名获取一个host.
     struct hostent *host = gethostbyname(str_dest.c_str());
@@ -90,7 +90,7 @@ in_addr_t netsender_base_impl::get_net_addr(string str_dest)
 bool netsender_base_impl::disconnect()
 {
 //    printf("base_impl::disconnect\n");
-    close_socket();
+    close_socket(m_socket);
     return true;
 }
 

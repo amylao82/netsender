@@ -11,6 +11,7 @@
 #include <string>
 #include <cstdint>
 #include <cstring>
+#include <iostream>
 
 #ifdef PLATFORM_WINDOWS
 #include <winsock2.h>

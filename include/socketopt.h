@@ -25,9 +25,16 @@
 #define _SOCKETOPT_H_
 
 #include <vector>
+#include <cstring>
+
+#ifdef PLATFORM_WINDOWS
+#include <winsock2.h>
+#include<ws2tcpip.h>
+#include <windows.h>
+#else
 #include <sys/socket.h>
 #include <netinet/tcp.h>
-#include <cstring>
+#endif
 
 using namespace std;
 

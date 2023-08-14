@@ -1,4 +1,4 @@
-﻿
+
 #include "netsender_udp.h"
 
 netsender_udp::netsender_udp(NETSENDER_TYPE type, string server, int port, recvcb_interface* protocol_iface)

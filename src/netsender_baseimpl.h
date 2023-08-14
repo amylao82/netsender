@@ -67,11 +67,16 @@ class netsender_base_impl: public netsender
 
 	//type可以取值SOCK_STREAM/SOCK_DGRAM
 	bool open_socket(int type);
-	bool close_socket();
+
+	//这个函数命名不好,因为关闭socket的函数,在linux下,叫close;在windows下,叫closesocket.
+	//这个名字与windows下的名字太过相似,会让人无所适从.
+	//后期要整理.
+	bool close_socket(int& socket);
 
 	void set_socket_option(socketopt* opt);
 	//从网络地址或者域名里得到in_addr_t信息
-	in_addr_t get_net_addr(string str_dest);
+	//in_addr_t get_net_addr(string str_dest);
+	uint32_t get_net_addr(string str_dest);
 
 
 	//static void thread_recv(netsender_base_impl* args, SOCKETINFO& socket_communicate);

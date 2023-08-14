@@ -1,4 +1,4 @@
-﻿
+
 #include "netsender.h"
 #include "netsender_udp.h"
 #include "netsender_tcp_server.h"

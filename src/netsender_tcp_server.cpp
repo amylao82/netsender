@@ -41,7 +41,7 @@ bool netsender_tcp_server::init(socketopt* opt)
     //
     // 开始监听连接
     if (listen(m_socket, 5) == -1) {
-        close(m_socket);
+        close_socket(m_socket);
 	printf("listen error!\n");
         return false;
     }
@@ -268,7 +268,7 @@ int netsender_tcp_server::recv_net_packet(char* buffer, int buf_len, SOCKETINFO&
 
 void netsender_tcp_server::close_communicate_socket(SOCKETINFO& socketinfo)
 {
-    close(socketinfo.tcp.socket);
+    close_socket(socketinfo.tcp.socket);
 }
 
 
