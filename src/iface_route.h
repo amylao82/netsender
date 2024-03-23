@@ -16,6 +16,8 @@
 
 using namespace std;
 
+#ifndef PLATFORM_WINDOWS
+
 class iface_route
 {
     typedef struct _ROUTE_INFO
@@ -39,6 +41,8 @@ class iface_route
     protected:
 	vector<ROUTE_INFO> m_route;
 };
+
+#endif
 
 #endif
 

@@ -1,6 +1,8 @@
 
 #include "iface_route.h"
 
+#ifndef PLATFORM_WINDOWS
+
 iface_route::iface_route()
 {
     init();
@@ -74,5 +76,7 @@ void iface_route::init()
 
     fclose(fp);
 }
+
+#endif
 
 
